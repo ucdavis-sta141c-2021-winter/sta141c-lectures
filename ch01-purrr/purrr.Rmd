@@ -1,0 +1,835 @@
+---
+title: "Functional programming in R"
+output: 
+  html_document:
+    toc: yes
+---
+
+You'll learn some of the powerful programming tools provided by `purrr`, one of the tidyverse core packages.
+
+```{r, message = FALSE}
+library(tidyverse)
+```
+
+
+## Pipe operator
+
+We are going to detour a bit to talk about pipe operator.
+Pipe operator is a powerful way to make your code much cleaner and readible by
+
+- structuring sequences of data operations left-to-right (as opposed to from the inside and out),
+- avoiding nested function calls,
+- minimizing the need for local variables and function definitions, and
+- making it easy to add steps anywhere in the sequence of operations.
+
+The operators pipe their left-hand side values forward into expressions that
+appear on the right-hand side, i.e. one can replace `f(x)` with 
+`x %>% f()`, where `%>%` is the (main) pipe-operator. When coupling 
+several function calls with the pipe-operator, the benefit will become
+more apparent. Consider this pseudo example:
+
+```{r, eval = FALSE}
+raw_data <- read.csv("/path/to/data/file.csv")
+sub_data <- subset(raw_data, variable_a > x)
+new_data <- transform(sub_data, variable_c = variable_a / variable_b)
+the_data <- head(new_data, 100)
+```
+However, the local variables are really not necessary, so one liner could be
+
+```{r, eval = FALSE}
+the_data <- head(
+  transform(
+    subset(
+      read.csv("/path/to/data/file.csv"), 
+    variable_a > x), 
+  variable_c = variable_a / variable_b), 
+100)
+```
+
+But that is too hard to read and reason. If we use pipe operator,
+
+```{r, eval = FALSE}
+the_data <- read.csv("/path/to/data/file.csv") %>%
+  subset(variable_a > x) %>%
+  transform(variable_c = variable_a / variable_b) %>%
+  head(100)
+```
+
+Hint: In RStudio, you could use `Ctrl + Shift + M` (or `Cmd + Shift + M`) to insert the pipe operator.
+
+
+### Basic usage
+
+* `x %>% f` or `x %>% f()` is equivalent to `f(x)`
+* `x %>% f(y)` is equivalent to `f(x, y)`
+* `x %>% f %>% g %>% h` is equivalent to `h(g(f(x)))`
+
+
+```{r}
+choose(5, 3)
+5 %>% choose(3)
+```
+
+
+### The argument placeholder
+
+* `x %>% f(y, .)` is equivalent to `f(y, x)`
+* `x %>% f(y, z = .)` is equivalent to `f(y, z = x)`
+
+```{r}
+3 %>% choose(5, .)
+3 %>% choose(5, k = .)
+```
+
+### Re-using the placeholder
+
+It is straightforward to use the placeholder several times
+in a right-hand side expression. However, when the placeholder
+only appears in a nested expressions magrittr will still apply
+the first-argument rule. The reason is that in most cases this
+results more clean code. 
+
+`x %>% f(y = nrow(.), z = ncol(.))` is equivalent to 
+   `f(x, y = nrow(x), z = ncol(x))`
+
+```{r}
+5 %>% choose(. - 2)
+5 %>% choose(3)
+choose(5, 3)
+```
+
+The behavior can be
+overruled by enclosing the right-hand side in braces:
+
+`x %>% {f(y = nrow(.), z = ncol(.))}` is equivalent to 
+   `f(y = nrow(x), z = ncol(x))`
+
+```{r}
+list(n = 5, k = 3) %>% {choose(.$n, .$k)}
+```
+
+
+## What is functional programming?
+
+> In computer science, functional programming is a programming paradigm—a style of building the structure and elements of computer programs that treats computation as the evaluation of mathematical functions and avoids changing-state and mutable data.
+
+To put is simple, it is a programming style without side effects.
+
+
+```{python, eval = FALSE}
+def f(x):
+  x["a"] = 2
+  return x
+
+x = {"a": 1}
+f(x) == x
+```
+
+```{r}
+f <- function(x) {
+  x$a <- 2
+  x
+}
+
+x <- list(a = 1)
+isTRUE(all.equal(f(x), x))
+```
+
+
+## Is R a functional language?
+
+R, at its heart, is a functional programming language. Most base R functions are pure, with a few notable exceptions:
+
+- `library()` which loads a package, and hence modifies the search path.
+
+- `setwd()`, `Sys.setenv()`, `Sys.setlocale()` which change the working directory, environment variables, and the locale, respectively.
+
+- `plot()` and friends which produce graphical output.
+
+- `write()`, `write.csv()`, `saveRDS()`, etc. which save output to disk.
+
+- `options()` and `par()` which modify global settings.
+
+- `S4` related functions which modify global tables of classes and methods.
+
+- Random number generators which produce different numbers each time you run them
+
+Almost everything else in R are functions.
+```{r}
+x <- 1
+y <- 2
+x + y
+`+`(x, y)
+
+a <- 3:5
+a[3]
+`[`(a, 3)
+
+z <- 1
+`<-`(z, 1)
+```
+
+
+## Revisit for loops
+
+Suppose we want to compute the sample medians for each column of the data frame
+
+```{r}
+df <- tibble(
+  a = rnorm(10),
+  b = rnorm(10),
+  c = rnorm(10),
+  d = rnorm(10)
+)
+# if you want to be fancy
+df <- tibble(!!!rerun(4, rnorm(10)) %>% set_names(letters[seq_len(length(.))]))
+```
+
+
+A naive way to do so
+```{r}
+median(df$a)
+median(df$b)
+median(df$c)
+median(df$d)
+```
+
+```{r}
+# a base R for loop
+output <- vector("double", ncol(df)) # 1. output
+for (i in seq_along(df)) { # 2. sequence
+  output[i] <- median(df[[i]]) # 3. body
+}
+output
+```
+
+### Base R solution
+
+```{r}
+lapply(df, median)
+sapply(df, median)
+```
+These functions are great but they are not far less powerful then the next function `map`.
+
+
+## Using `purrr`
+
+THe `purrr` package (part of `tidyverse`) provides a function `map`.
+
+The basic syntax for `map` is
+```
+map(ITERABLE, A_FUNCTION)
+```
+or
+```
+ITERABLE %>% map(A_FUNCTION)
+```
+
+* `ITERABLE`'s are objects like vectors, list and data frame.
+* `A_FUNCTION` is a function, an expression, or a list of element names
+
+
+```{r}
+df %>% map(median)
+```
+
+Consider the following naive function which computes factorials
+```{r}
+fac <- function(n) {
+  if (n == 1) {
+    return(1L)
+  } else {
+    return(fac(n - 1L) * n)
+  }
+}
+fac(5)
+```
+
+Note that `fac` is not vectorized, it means that it doesn't handle vector input.
+```{r, error = TRUE}
+fac(1:5)
+```
+
+```{r}
+1:5 %>% map(fac)
+```
+is almost equivalent to `list(fac(1), fac(2), fac(3), fac(4), fac(5))`
+
+
+### Passing additional arguments
+
+```r
+mean(..., trim = 0.5)
+```
+computes trimed mean of the input.
+
+```{r}
+df %>% map(mean, trim = 0.5)
+```
+
+### Inline function / expressions
+
+```{r}
+df %>% map(function(x) x^2)
+```
+or
+```{r}
+df %>% map(function(.) .^2)
+```
+or simply
+
+```{r}
+df %>% map(~ .^2)
+```
+
+### Name and position shortcuts
+
+The `map` function also provide some shortcuts to extract elements from lists or vectors.
+
+
+```{r}
+# extract first elelment from each column
+df %>% map(1)
+```
+
+
+```{r}
+roster <- list(
+  list(name = "Peter", id = 1231, grades = list(STA141A = "A", STA141B = "A"), hobbies = c("Math", "Stat")),
+  list(name = "Mary",  id = 4213, grades = list(STA141A = "B", STA141B = "B"), hobbies = c("Math", "Chem"))
+)
+```
+
+```{r}
+roster %>% map("name")
+```
+
+### Multi-level extraction
+```{r}
+roster %>% map(list("grades", "STA141B"))
+```
+```{r}
+roster %>% map(list("hobbies", 1))
+```
+
+
+### Type-specific map
+
+`map()` always returns a list, even if all the elements have the same flavor and are of length one. But in that case, you might prefer a simpler object.
+
+- `map_lgl()` makes a logical vector.
+- `map_int()` makes an integer vector.
+- `map_dbl()` makes a double vector.
+- `map_chr()` makes a character vector.
+
+```{r}
+df %>% map_dbl(mean)
+```
+
+```{r}
+1:5 %>% map_int(fac)
+```
+
+```{r}
+1:5 %>% map_lgl(~ . == 2L)
+```
+
+```{r}
+roster %>% map_chr("name")
+```
+
+
+### Enumerating over the input
+
+`imap` enumerates over the input
+
+```{r}
+a <- c(11, 12, 13)
+a %>% imap_dbl(function(v, i) v)
+```
+```{r}
+a %>% imap_dbl(function(v, i) i)
+```
+
+```{r}
+b <- c(4, 5, 6)
+a %>% imap_dbl(function(v, i) v + b[i])
+# equivalently
+a %>% imap_dbl(~ .x + b[.y])
+```
+
+
+### Extraction and assignment
+
+```{r}
+x <- 11:20
+x %>% pluck(1) # equivalent to x[1]
+```
+
+
+Nested extraction
+```{r}
+a_to_e <- list(lowers = letters[1:5], uppers = LETTERS[1:5])
+a_to_e %>% pluck("lowers") # equivalent to a_to_e["lowers"]
+a_to_e %>% pluck("lowers", 2) # equivalent to a_to_e["lowers"][2]
+```
+
+Assignments
+```{r}
+a_to_e %>% assign_in(list("lowers", 2), "z")
+a_to_e %>% modify_in(list("lowers", 2), toupper)
+```
+These modifications are not in-place, the original variable is not modified
+```{r}
+a_to_e
+```
+
+
+### Keep and drop elements
+
+```{r}
+is_even <- function(x) x %% 2 == 0
+11:20 %>% keep(is_even)
+# or equivalently
+11:20 %>% keep(~ . %% 2 == 0)
+```
+
+```{r}
+11:20 %>% keep(~ !is_even(.))
+11:20 %>% keep(negate(is_even))
+11:20 %>% discard(is_even)
+```
+
+
+### Predicate functions
+
+```{r}
+# is every element in `eleven_to_twenty` even?
+11:20 %>% every(is_even) # more efficient then all(is_even(11:20))
+# are some elements in `eleven_to_twenty` even?
+11:20 %>% some(is_even) # more efficient then any(is_even(11:20))
+
+11:20 %>% has_element(12L)
+# caution! 12 is a double, but 11:20 is a interger vector.
+11:20 %>% has_element(12)
+
+11:20 %>% some(~ . == 12)  # maybe a bit robust
+
+# the first even number divisible by 7 is
+11:20 %>% detect(~ . %% 7 == 0)
+# get the index of the first element divisible by 7
+11:20 %>% detect_index(~ . %% 7 == 0)
+```
+
+### Map conditionaly
+
+```{r}
+square <- function(x) x^2
+# square all even numbers
+1:5 %>% map_if(is_even, square)
+```
+
+```{r}
+# apply the function to the third and fifth positions
+1:5 %>% map_at(c(3, 5), square)
+```
+
+Note: these are currently no type specific `map_if` or `map_at`.
+
+### Modify elements selectively
+
+Unlike `map()` and its variants which always return a fixed object type, the `modify()` family always returns the same type as the input object.
+
+```{r}
+x <- rnorm(5)
+x %>% modify(square)
+
+# it doesn't work because 1:5 is an integer vector, while `square` produces double
+# 1:5 %>% modify(square)
+as.double(1:5) %>% modify(square)
+1:5 %>% modify(~ as.integer(.^2))
+
+# make even numbers negative
+1:5 %>% modify_if(is_even, ~ -.)
+
+# make the third and fifth numbers negative
+1:5 %>% modify_at(c(3, 5), ~ -.)
+```
+Again, these modifications are not in-place.
+
+
+### Reshape lists
+
+```{r}
+a_to_e <- list(lowers = letters[1:5], uppers = LETTERS[1:5])
+# a_to_e %>% flatten()
+a_to_e %>% flatten_chr()  # type specific
+```
+
+
+```{r}
+a_to_e %>%
+  transpose() %>%
+  map(~ str_c(.$lowers, .$uppers))
+```
+
+```{r}
+mpgt <- mpg %>% transpose()
+mpgt[[5]]
+```
+
+
+```{r}
+(M <- matrix(1:9, nrow = 3, ncol = 3))
+
+# base R
+apply(M, 1, mean)  # it is not a perfect example because there is rowMeans(M)
+
+# tidyverse version
+M %>% array_tree(1) %>% map_dbl(mean)
+```
+
+
+### Add elements to lists
+
+```{r}
+li <- list(a = 1, b = 2)
+li %>%
+  append(list(c = 3, d = 3)) %>%
+  prepend(list(x = 0, y = 0)) %>%
+  splice(u = 3, v = 4)
+```
+
+### Capture errors and warnings
+
+```{r, error = TRUE}
+log("a")  # gives error
+log(-1)   # gives warning
+```
+
+```{r, error = TRUE}
+list("a", -1, 3) %>% map(log)
+```
+
+```{r}
+list("a", -1, 3) %>%
+  map(safely(log))
+```
+
+```{r}
+list(-1, 3) %>%
+  map(quietly(log)) %>% 
+  map_dbl("result")
+```
+
+```{r}
+list("a", 3) %>%
+  map_dbl(possibly(log, NaN))
+```
+
+
+### Map more than one argument
+
+Two arguments
+```{r}
+a <- c(7, 8, 9)
+b <- c(2, 3, 4)
+
+map2(a, b, choose)
+a %>% map2(b, choose)
+b %>% map2(a, ., choose)
+# or equivalently
+map2(a, b, function(x, y) choose(x, y))
+map2(a, b, ~ choose(.x, .y))
+```
+
+More than two arguments
+```{r}
+x <- list(
+  a = c(1, 2, 3),
+  b = c(5, 4, 8),
+  c = c(4, 7, 9)
+)
+
+x %>% pmap(function(a, b, c) a / (b + c))
+```
+
+### Cross
+
+The `map` function applies to the inputs elementwisely. Sometimes, we wish to consider all combinations of the inputs. The `cross*` functions are designed to handle those situations.
+
+`cross2` expects two iterables and usually is used together with `lift`
+```{r}
+a <- c(7, 8, 9)
+b <- c(2, 3, 4)
+
+cross2(a, b) %>% map_dbl(lift(choose))
+```
+
+`cross` expects a list of iterables
+```{r}
+li <- list(
+  a = c(7, 8, 9),
+  b = c(2, 3, 4)
+)
+li %>%
+  set_names(c("n", "k")) %>%
+  cross() %>%
+  map(lift(choose))
+```
+
+
+```{r}
+dat <- tibble(
+  x = seq(-1, 1, length = 10),
+  y = seq(-1, 1, length = 10)
+)
+dat
+```
+
+We wish to plot a heat map of `sqrt(x^2 + y^2)`
+```{r}
+dat %>% mutate(z  = sqrt(x^2 + y^2)) # wrong
+```
+
+```{r}
+dat %>%
+  cross_df() %>%
+  mutate(z = sqrt(x^2 + y^2)) %>%
+  ggplot(aes(x, y, fill = z)) +
+  geom_tile()
+```
+
+
+```{r}
+# alternatively
+dat %>%
+  expand(x, y) %>%
+  mutate(z = sqrt(x^2 + y^2)) %>%
+  ggplot(aes(x, y, fill = z)) +
+  geom_tile()
+```
+
+The difference is that `cross_df` doesn't handle duplications.
+
+```{r}
+dat <- tibble(
+  x = c(1, 1),
+  y = c(2, 3)
+)
+dat %>% cross_df()
+dat %>% expand(x, y)
+```
+
+
+### Reduce iterable
+
+The `reduce` function combines the values of an iterable by iteratively applying a binary function.
+
+```{r}
+x <- 1:4
+x %>% reduce(`+`)
+# it means ((1 + 2) + 3) + 4
+1:4 %>% reduce(`+`, .dir = "backward")
+# it means 1 + (2 + (3 + 4))
+```
+
+
+It is usefully if we want to average data frames / matrices.
+
+```{r}
+matrices <- list(
+  matrix(rnorm(9), nr = 3, nc = 3),
+  matrix(rnorm(9), nr = 3, nc = 3),
+  matrix(rnorm(9), nr = 3, nc = 3)
+)
+
+matrices %>% reduce(`+`) %>% `/`(length(matrices))
+matrices %>% {reduce(., `+`)/ length(.)}
+```
+
+
+It is also useful if we wants to row bind。
+
+```{r}
+ll <- list(
+  c(name = "Peter", age = 23),
+  c(name = "Paul", age = 19),
+  c(name = "Mary", age = 22)
+)
+```
+
+```{r, error = TRUE}
+bind_rows(ll)  #  it only works in dplyr 1.0
+ll %>% reduce(bind_rows)
+```
+
+
+## A example of linear regression
+
+
+```{r}
+mtcars %>%
+  nest(data = -cyl) %>% 
+  mutate(model = map(data, ~ lm(mpg ~ wt, data = .))) %>%
+  transmute(cyl, r_sq = model %>% map(summary) %>% map_dbl("r.squared"))
+```
+
+
+```{r}
+# it is more readible
+mtcars %>%
+  group_by(cyl) %>%
+  nest() %>%
+  mutate(model = map(data, ~ lm(mpg ~ wt, data = .))) %>%
+  transmute(r_sq = model %>% map(summary) %>% map_dbl("r.squared"))
+```
+
+## Related concepts of R Functions
+
+### Lexical scoping
+
+```{r}
+y <- 2
+addy <- function(x) {
+  x + y
+}
+addy(3)
+```
+
+```{r}
+foo <- function(x) {
+  addy(x)
+}
+foo(3)
+```
+
+`foo(3)` returns 3 because `addy` was defined in the global environment (the enclosing environment of `addy`).
+
+
+The look up is dynamic though,
+```{r}
+y <- 4
+addy(3)
+```
+
+
+### Dynamic scoping
+
+Looking up variables in the calling environment rather than in the enclosing environment is called dynamic scoping. R is one of the few languages that implement dynamic scoping.
+
+```{r}
+y <- 2
+addy <- function(x) {
+  x + y
+}
+
+bar <- function(x) {
+  y <- 4
+  addy(x)
+}
+bar(3)
+```
+
+`bar(3)` returns 3 because of the lexical scroping rules of `addy`. However, we could change the scope rule by overriding the enclosing environment of a function.
+
+```{r}
+bar <- function(x) {
+  y <- 4
+  environment(addy) <- environment()
+  addy(x)
+}
+bar(3)
+```
+
+
+### Lazy evaluation
+
+In R, an expression is only evaluted when it is needed.
+
+```{r}
+one <- function() {
+  cat("called one\n")
+  1
+}
+
+square <- function(x) {
+  cat("called square\n")
+  x^2
+}
+square(one())
+```
+
+For comparsion, python is eager.
+```{python}
+def one():
+  print("called one")
+  return 1
+
+def square(x):
+  print("call square")
+  return x**2
+  
+square(one())
+```
+
+R could do a lot of interesting things with lazy evaluation.
+
+```{r}
+echo <- function(x) {
+  cat("you typed\n")
+  print(substitute(x))
+}
+
+echo(it + does - not == have * to / make ^ sense)
+```
+
+### Some terminology
+
+We end this chapter with several terminology.
+
+- functionals
+  - functions that have function inputs. For example, `map`: `map(x, mean)`.
+
+- function factories
+  - functions that return functions, For example,
+    ```{r}
+    pow <- function(k) {
+      force(k)  # to avoid lazy evaluation
+      function(x) {
+        x^k
+      }
+    }
+    square <- pow(2)
+    square(5)
+    ```
+
+    ```{r}
+    pow2 <- function(k) {
+      function(x) {
+        x^k
+      }
+    }
+    h <- 2
+    square <- pow2(h)
+    h <- 3
+
+    # up to this point, k or h is not evaluated
+    square(2)  # 2^3
+
+    h <- 4
+    square(2)  # 2^3
+    ```
+
+- function operators
+  - function that has function input(s) and returns a function. For examples, `lift`, `safely`.
+
+
+
+# References
+
+- R for Data Science https://r4ds.had.co.nz/iteration.html
+- Advanced R https://adv-r.hadley.nz/fp.html
+- purrr tutorial https://jennybc.github.io/purrr-tutorial/
+- purrr cheatsheet https://github.com/rstudio/cheatsheets/blob/master/purrr.pdf
+
