@@ -21,7 +21,6 @@ output:
 | 01-05               | Introduction                                    | [introduction]
 | 01-07               | [functional programming](ch01-purrr/purrr.Rmd)  | [purrr]
 
-
 [introduction]: README.md
 [purrr]: https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch01-purrr/purrr.html
 
