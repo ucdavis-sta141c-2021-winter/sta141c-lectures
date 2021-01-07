@@ -1,45 +1,48 @@
 
--   [STA 141C Big Data & High Performance Statistical
+  - [STA 141C Big Data & High Performance Statistical
     Computing](#sta-141c-big-data-high-performance-statistical-computing)
-    -   [People](#people)
-    -   [Material](#material)
-    -   [Links](#links)
-    -   [Tentative Schedule](#tentative-schedule)
-    -   [Grading](#grading)
-    -   [Resources](#resources)
-    -   [Prerequisites](#prerequisites)
-    -   [How to “clone” the notes repo](#how-to-clone-the-notes-repo)
-    -   [Assignments](#assignments)
-        -   [Feedback](#feedback)
-        -   [Regrade Requests](#regrade-requests)
-        -   [Assignment Rubric](#assignment-rubric)
+      - [People](#people)
+      - [Material](#material)
+      - [Links](#links)
+      - [Tentative Schedule](#tentative-schedule)
+      - [Grading](#grading)
+      - [Resources](#resources)
+      - [Prerequisites](#prerequisites)
+      - [How to “clone” the notes repo](#how-to-clone-the-notes-repo)
+      - [Assignments](#assignments)
+          - [Feedback](#feedback)
+          - [Regrade Requests](#regrade-requests)
+          - [Assignment Rubric](#assignment-rubric)
 
 # STA 141C Big Data & High Performance Statistical Computing
 
 ## People
 
--   Instructor: Randy Lai<br> You should use Campuswire or Canvas to
+  - Instructor: Randy Lai<br> You should use Campuswire or Canvas to
     contact me. DO NOT send email to me as I tend to ignore emails (too
     much spams).
--   Meeting time: 12:10 - 1:30 PM, TR
--   TA: Hoseung Song, Cong Xu
--   Office hour: To be announced
+  - Meeting time: 12:10 - 1:30 PM, TR
+  - TA: Hoseung Song, Cong Xu
+  - Office hour:
+      - Hoseung: 2:00 - 4:00pm PM Thursday
+      - Cong: 1:00 - 3:00pm PM Friday
+      - Randy: 10:00 AM - 12:00 PM Friday
 
 ## Material
 
 | Date  | Note                                           | HTML                                                                                          |
-|-------|------------------------------------------------|-----------------------------------------------------------------------------------------------|
+| ----- | ---------------------------------------------- | --------------------------------------------------------------------------------------------- |
 | 01-05 | Introduction                                   | [introduction](README.md)                                                                     |
 | 01-07 | [functional programming](ch01-purrr/purrr.Rmd) | [purrr](https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch01-purrr/purrr.html) |
 
 ## Links
 
--   [Canvas](http://canvas.ucdavis.edu/) for grades
--   [GitHub](https://github.com/ucdavis-sta141c-2021-winter) for lecture
+  - [Canvas](http://canvas.ucdavis.edu/) for grades
+  - [GitHub](https://github.com/ucdavis-sta141c-2021-winter) for lecture
     notes and assignments. Please always refer to the documents found on
     GitHub.
--   [Campuswire](https://campuswire.com/c/GD5E13A83) for discussions.
-    Please use your ucd email to register! If you have used piazza
+  - [Campuswire](https://campuswire.com/c/GD5E13A83) for discussions.
+    Please use your ucd email to register\! If you have used piazza
     before, it is similar but has a better interface. Please use
     Campuswire to ask any questions related to assignments and course
     materials. I and the TA will not answer any emails related to the
@@ -53,7 +56,7 @@
 ## Tentative Schedule
 
 | Topic                              |
-|------------------------------------|
+| ---------------------------------- |
 | Introduction                       |
 | Functional programming             |
 | Object Oriented programming        |
@@ -70,76 +73,73 @@
 ## Grading
 
 | Category                                                                        | Grade Percentage |
-|---------------------------------------------------------------------------------|------------------|
+| ------------------------------------------------------------------------------- | ---------------- |
 | Assignments                                                                     | 65%              |
 | [Final Project](https://github.com/ucdavis-sta141c-2021-winter/sta141c-project) | 25%              |
 | Participation                                                                   | 10%              |
 
--   There will be around 6 assignments and they are assigned via GitHub
+  - There will be around 6 assignments and they are assigned via GitHub
     classroom.
--   Assignments must be turned in by the due date. No late assignments
+  - Assignments must be turned in by the due date. No late assignments
     are accepted.
--   Participation will be based on your reputation point in Campuswire.
+  - Participation will be based on your reputation point in Campuswire.
 
 ## Resources
 
--   J. Bryan, the STAT 545 TAs, J. Hester, Happy Git and GitHub for the
+  - J. Bryan, the STAT 545 TAs, J. Hester, Happy Git and GitHub for the
     useR (<https://happygitwithr.com/>)
--   J. Bryan, Data wrangling, exploration, and analysis with R
+  - J. Bryan, Data wrangling, exploration, and analysis with R
     (<https://stat545.com/>)
--   G. Grolemund and H. Wickham, R for Data Science
+  - G. Grolemund and H. Wickham, R for Data Science
     (<https://r4ds.had.co.nz/>)
--   H. Wickham, Advanced R (<https://adv-r.hadley.nz/>)
--   And a lot of google
+  - H. Wickham, Advanced R (<https://adv-r.hadley.nz/>)
+  - And a lot of google
 
 ## Prerequisites
 
--   Strong in R programming
--   R 4.0.3 (check your R version)
--   RStudio 1.3.1093 (check your RStudio Version)
--   R Markdown (read this <https://rmarkdown.rstudio.com/lesson-1.html>)
--   Knowledge about git and GitHub: read ‘Happy Git and GitHub for the
+  - Strong in R programming
+  - R 4.0.3 (check your R version)
+  - RStudio 1.3.1093 (check your RStudio Version)
+  - R Markdown (read this <https://rmarkdown.rstudio.com/lesson-1.html>)
+  - Knowledge about git and GitHub: read ‘Happy Git and GitHub for the
     useR’ (It is absoluately important to read the ebook if you have no
     experiences with git/GitHub)
--   Some knowledge of
+  - Some knowledge of
     [dplyr](https://ucdavis-sta141b-2021-winter.github.io/sta141b-lectures/ch01-dplyr/dplyr.html)
     will be helpful
--   Minimal amount of Python
+  - Minimal amount of Python
 
 ## How to “clone” the notes repo
 
 Assuming that you have `git` installed,
 
--   Open RStudio -&gt; New Project -&gt; Version Control -&gt; Git -&gt;
-    paste the URL:
+  - Open RStudio -\> New Project -\> Version Control -\> Git -\> paste
+    the URL:
     <https://github.com/ucdavis-sta141c-2021-winter/sta141c-lectures.git>
--   Choose a directory to create the project
--   You could make any changes to the repo as you wish.
--   To fetch updates
-    -   go to the `git` pane in RStudio
-    -   click the “Commit” button and
-    -   check the files changed by you
-    -   type a short message about the changes and hit “Commit”
-    -   After committing the message, hit the “Pull” button (PS: there
+  - Choose a directory to create the project
+  - You could make any changes to the repo as you wish.
+  - To fetch updates
+      - go to the `git` pane in RStudio
+      - click the “Commit” button and
+      - check the files changed by you
+      - type a short message about the changes and hit “Commit”
+      - After committing the message, hit the “Pull” button (PS: there
         is a sub button “Pull with rebase”, only use it if you truly
         understand what it is)
-    -   Done if you see no errors
-    -   If there were lines which are updated by both me and you, you
+      - Done if you see no errors
+      - If there were lines which are updated by both me and you, you
         would see a merge conflict.
-    -   To resolve the conflict, locate the files with conflicts (U flag
+      - To resolve the conflict, locate the files with conflicts (U flag
         in the git pane).
-    -   Open the files and edit the conflicts, usually a conflict looks
+      - Open the files and edit the conflicts, usually a conflict looks
         like
-
-    <!-- -->
-
+    <!-- end list -->
         <<<<<<< HEAD
         - RStudio 1.2.5011 (check your RStudio Version)
         =======
         - RStudio 1.2.5033 (check your RStudio Version)
         >>>>>>> 85858c9a6ebba9057ca8db7c269bd0a2f7a3910a
-
-    -   check all the files with conflicts and commit them again with a
+      - check all the files with conflicts and commit them again with a
         new message.
 
 ## Assignments
@@ -163,9 +163,9 @@ html files uploaded, 30% of the grade of that assignment will be
 deducted if it happens. To make a request, send me a Canvas message with
 the following information:
 
--   Which assignment
--   URL to the repo of your assignment
--   The reason of the request
+  - Which assignment
+  - URL to the repo of your assignment
+  - The reason of the request
 
 ### Assignment Rubric
 
@@ -184,10 +184,10 @@ like:
 
 The report does the following:
 
--   solves all the questions contained in the prompt
--   makes conclusions that are supported by evidence in the data
--   discusses efficiency and limitations of the computation
--   cites any sources used
+  - solves all the questions contained in the prompt
+  - makes conclusions that are supported by evidence in the data
+  - discusses efficiency and limitations of the computation
+  - cites any sources used
 
 The attached code runs without modification.
 
