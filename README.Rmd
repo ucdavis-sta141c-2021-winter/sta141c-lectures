@@ -12,7 +12,10 @@ output:
   You should use Campuswire or Canvas to contact me. DO NOT send email to me as I tend to ignore emails (too much spams).
 - Meeting time: 12:10 - 1:30 PM, TR
 - TA: Hoseung Song, Cong Xu
-- Office hour: To be announced
+- Office hour:
+  - Hoseung: 2:00 - 4:00pm PM Thursday
+  - Cong: 1:00 - 3:00pm PM Friday
+  - Randy: 10:00 AM - 12:00 PM Friday
 
 ## Material
 
