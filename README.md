@@ -83,6 +83,8 @@
   - Assignments must be turned in by the due date. No late assignments
     are accepted.
   - Participation will be based on your reputation point in Campuswire.
+      - 1% each week if the reputation point for the week is above 20.
+      - the top scorers for the quarter will earn extra bonuses.
 
 ## Resources
 
