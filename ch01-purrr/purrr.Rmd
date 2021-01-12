@@ -7,7 +7,7 @@ output:
 
 You'll learn some of the powerful programming tools provided by `purrr`, one of the tidyverse core packages.
 
-```{r, message = FALSE}
+```{r message=FALSE}
 library(tidyverse)
 ```
 
@@ -27,6 +27,7 @@ appear on the right-hand side, i.e. one can replace `f(x)` with
 `x %>% f()`, where `%>%` is the (main) pipe-operator. When coupling 
 several function calls with the pipe-operator, the benefit will become
 more apparent. Consider this pseudo example:
+
 
 ```{r, eval = FALSE}
 raw_data <- read.csv("/path/to/data/file.csv")
@@ -60,7 +61,7 @@ Hint: In RStudio, you could use `Ctrl + Shift + M` (or `Cmd + Shift + M`) to ins
 
 ### Basic usage
 
-* `x %>% f` or `x %>% f()` is equivalent to `f(x)`
+* `x %>% f`, `x %>% f()`, `x %>% f(.)`is equivalent to `f(x)`
 * `x %>% f(y)` is equivalent to `f(x, y)`
 * `x %>% f %>% g %>% h` is equivalent to `h(g(f(x)))`
 
@@ -77,8 +78,10 @@ choose(5, 3)
 * `x %>% f(y, z = .)` is equivalent to `f(y, z = x)`
 
 ```{r}
-3 %>% choose(5, .)
+3 %>%  choose(5, .)
 3 %>% choose(5, k = .)
+# equivalent to 
+choose(5, k = 3)
 ```
 
 ### Re-using the placeholder
@@ -94,8 +97,7 @@ results more clean code.
 
 ```{r}
 5 %>% choose(. - 2)
-5 %>% choose(3)
-choose(5, 3)
+choose(5, 5 - 3)
 ```
 
 The behavior can be
@@ -103,7 +105,13 @@ overruled by enclosing the right-hand side in braces:
 
 `x %>% {f(y = nrow(.), z = ncol(.))}` is equivalent to 
    `f(y = nrow(x), z = ncol(x))`
+  
+```{r}
+5 %>% {choose(., . - 2)}
+```
 
+
+Piping two arguments
 ```{r}
 list(n = 5, k = 3) %>% {choose(.$n, .$k)}
 ```
@@ -111,7 +119,7 @@ list(n = 5, k = 3) %>% {choose(.$n, .$k)}
 
 ## What is functional programming?
 
-> In computer science, functional programming is a programming paradigm—a style of building the structure and elements of computer programs that treats computation as the evaluation of mathematical functions and avoids changing-state and mutable data.
+> In computer science, functional programming is a programming paradigm - a style of building the structure and elements of computer programs that treats computation as the evaluation of mathematical functions and avoids changing-state and mutable data.
 
 To put is simple, it is a programming style without side effects.
 
@@ -154,7 +162,7 @@ R, at its heart, is a functional programming language. Most base R functions are
 
 - Random number generators which produce different numbers each time you run them
 
-Almost everything else in R are functions.
+Almost everything else in R are pure functions.
 ```{r}
 x <- 1
 y <- 2
@@ -168,6 +176,7 @@ a[3]
 z <- 1
 `<-`(z, 1)
 ```
+
 
 
 ## Revisit for loops
@@ -203,6 +212,7 @@ for (i in seq_along(df)) { # 2. sequence
 output
 ```
 
+
 ### Base R solution
 
 ```{r}
@@ -233,9 +243,24 @@ ITERABLE %>% map(A_FUNCTION)
 df %>% map(median)
 ```
 
+Cosider the version of absolute which doesn't support vectors
+
+```{r}
+myabs <- function(x) {
+  if (x < 0) {
+    -x
+  } else {
+    x
+  }
+}
+# myabs(c(-1, 3))  # error
+c(-1, 3) %>% map_dbl(myabs)
+```
+
 Consider the following naive function which computes factorials
 ```{r}
 fac <- function(n) {
+  ## n has to be scalar
   if (n == 1) {
     return(1L)
   } else {
@@ -261,10 +286,15 @@ is almost equivalent to `list(fac(1), fac(2), fac(3), fac(4), fac(5))`
 ```r
 mean(..., trim = 0.5)
 ```
-computes trimed mean of the input.
+computes trimmed mean of the input.
 
 ```{r}
 df %>% map(mean, trim = 0.5)
+list(
+  a = mean(df$a, trim = 0.5), 
+  b = mean(df$b, trim = 0.5), 
+  c = mean(df$c, trim = 0.5), 
+  d = mean(df$d, trim = 0.5))
 ```
 
 ### Inline function / expressions
@@ -279,7 +309,7 @@ df %>% map(function(.) .^2)
 or simply
 
 ```{r}
-df %>% map(~ .^2)
+df %>% map_dfc(~ .^2)
 ```
 
 ### Name and position shortcuts
@@ -288,7 +318,7 @@ The `map` function also provide some shortcuts to extract elements from lists or
 
 
 ```{r}
-# extract first elelment from each column
+# extract first element from each column
 df %>% map(1)
 ```
 
@@ -321,6 +351,8 @@ roster %>% map(list("hobbies", 1))
 - `map_int()` makes an integer vector.
 - `map_dbl()` makes a double vector.
 - `map_chr()` makes a character vector.
+- `mpa_dfr()` makes a data frame rowwise-ly
+- `mpa_dfc()` makes a data frame columewise-ly
 
 ```{r}
 df %>% map_dbl(mean)
@@ -352,7 +384,9 @@ a %>% imap_dbl(function(v, i) i)
 ```
 
 ```{r}
+a <- c(11, 12, 13)
 b <- c(4, 5, 6)
+a + b
 a %>% imap_dbl(function(v, i) v + b[i])
 # equivalently
 a %>% imap_dbl(~ .x + b[.y])
@@ -377,6 +411,7 @@ a_to_e %>% pluck("lowers", 2) # equivalent to a_to_e["lowers"][2]
 Assignments
 ```{r}
 a_to_e %>% assign_in(list("lowers", 2), "z")
+# a_to_e["lowers"][2] <- "z"  # in-place modification
 a_to_e %>% modify_in(list("lowers", 2), toupper)
 ```
 These modifications are not in-place, the original variable is not modified
@@ -398,6 +433,7 @@ is_even <- function(x) x %% 2 == 0
 11:20 %>% keep(~ !is_even(.))
 11:20 %>% keep(negate(is_even))
 11:20 %>% discard(is_even)
+11:20 %>% discard(~ . %% 2 == 0)
 ```
 
 
@@ -410,15 +446,24 @@ is_even <- function(x) x %% 2 == 0
 11:20 %>% some(is_even) # more efficient then any(is_even(11:20))
 
 11:20 %>% has_element(12L)
-# caution! 12 is a double, but 11:20 is a interger vector.
+# caution! 12 is a double, but 11:20 is a integer vector.
 11:20 %>% has_element(12)
 
 11:20 %>% some(~ . == 12)  # maybe a bit robust
 
-# the first even number divisible by 7 is
+# the first number divisible by 7 is
 11:20 %>% detect(~ . %% 7 == 0)
 # get the index of the first element divisible by 7
 11:20 %>% detect_index(~ . %% 7 == 0)
+```
+
+```{r}
+# equivalently
+
+x <- 11:20 
+x %>% 
+  detect_index(~ . %% 7 == 0) %>% 
+  pluck(x, .)
 ```
 
 ### Map conditionaly
@@ -427,6 +472,7 @@ is_even <- function(x) x %% 2 == 0
 square <- function(x) x^2
 # square all even numbers
 1:5 %>% map_if(is_even, square)
+1:5 %>% map_if(~ . %% 2 == 0, ~ .^2)
 ```
 
 ```{r}
@@ -449,6 +495,10 @@ x %>% modify(square)
 as.double(1:5) %>% modify(square)
 1:5 %>% modify(~ as.integer(.^2))
 
+add_one <- function(x) x + 1L
+1:5 %>% modify(add_one) %>% class # integer
+rnorm(5) %>% modify(add_one) %>% class # double
+
 # make even numbers negative
 1:5 %>% modify_if(is_even, ~ -.)
 
@@ -457,6 +507,11 @@ as.double(1:5) %>% modify(square)
 ```
 Again, these modifications are not in-place.
 
+```{r}
+x <- 1:5
+x %>% modify_if(is_even, ~ -.)
+x  # untouched
+```
 
 ### Reshape lists
 
@@ -466,27 +521,44 @@ a_to_e <- list(lowers = letters[1:5], uppers = LETTERS[1:5])
 a_to_e %>% flatten_chr()  # type specific
 ```
 
+```{r}
+x <- matrix(1:6, 3, 2)
+x
+t(x)
+```
 
 ```{r}
 a_to_e %>%
   transpose() %>%
-  map(~ str_c(.$lowers, .$uppers))
+  map_chr(~ str_c(.$lowers, .$uppers))
 ```
+
+```{r}
+# without transpose, a little bit less readable
+n <- length(a_to_e$lowers)
+seq_len(n) %>% 
+  map_chr(~ str_c(a_to_e$lowers[.], a_to_e$uppers[.]))
+```
+
 
 ```{r}
 mpgt <- mpg %>% transpose()
-mpgt[[5]]
+
+mpg$model[3]
+mpgt[[3]]$model
 ```
 
 
 ```{r}
-(M <- matrix(1:9, nrow = 3, ncol = 3))
+(M <- matrix(rnorm(9), nrow = 3, ncol = 3))
 
 # base R
-apply(M, 1, mean)  # it is not a perfect example because there is rowMeans(M)
+apply(M, 1, sd) # row sd's
 
 # tidyverse version
-M %>% array_tree(1) %>% map_dbl(mean)
+M %>% 
+  array_tree(1) %>% 
+  map_dbl(sd)
 ```
 
 
@@ -494,6 +566,7 @@ M %>% array_tree(1) %>% map_dbl(mean)
 
 ```{r}
 li <- list(a = 1, b = 2)
+# these aren't in-place modification
 li %>%
   append(list(c = 3, d = 3)) %>%
   prepend(list(x = 0, y = 0)) %>%
@@ -511,15 +584,18 @@ log(-1)   # gives warning
 list("a", -1, 3) %>% map(log)
 ```
 
+
 ```{r}
 list("a", -1, 3) %>%
-  map(safely(log))
+  map(safely(log)) %>% 
+  map_dbl(~ if (is.null(.$error)) exp(.$result) else -1)
 ```
+
 
 ```{r}
 list(-1, 3) %>%
   map(quietly(log)) %>% 
-  map_dbl("result")
+  map_dbl(~ if (length(.$warnings) == 0) exp(.$result) else -Inf)
 ```
 
 ```{r}
@@ -535,12 +611,15 @@ Two arguments
 a <- c(7, 8, 9)
 b <- c(2, 3, 4)
 
-map2(a, b, choose)
-a %>% map2(b, choose)
-b %>% map2(a, ., choose)
+map2_dbl(a, b, choose)
+# list(choose(7, 2), choose(8, 3), choose(9, 4))
+# seq_along(a) %>% map_dbl(~ choose(a[i], b[i]))
+
+a %>% map2_dbl(b, choose)
+b %>% map2_dbl(a, ., choose)
 # or equivalently
-map2(a, b, function(x, y) choose(x, y))
-map2(a, b, ~ choose(.x, .y))
+map2_dbl(a, b, function(x, y) choose(x, y))
+map2_dbl(a, b, ~ choose(.x, .y))
 ```
 
 More than two arguments
@@ -551,7 +630,8 @@ x <- list(
   c = c(4, 7, 9)
 )
 
-x %>% pmap(function(a, b, c) a / (b + c))
+# x$a / (x$b + x$c)
+x %>% pmap_dbl(function(a, b, c) a / (b + c))
 ```
 
 ### Cross
@@ -563,8 +643,16 @@ The `map` function applies to the inputs elementwisely. Sometimes, we wish to co
 a <- c(7, 8, 9)
 b <- c(2, 3, 4)
 
+cross2(a, b)[[1]] ## list(7, 2)
+choose(7, 2)
+li <- list(7, 2)
+lifted_choose <- lift(choose)
+lifted_choose(list(7, 2))
+lift(choose)(list(7, 2))
+
 cross2(a, b) %>% map_dbl(lift(choose))
 ```
+
 
 `cross` expects a list of iterables
 ```{r}
@@ -575,8 +663,30 @@ li <- list(
 li %>%
   set_names(c("n", "k")) %>%
   cross() %>%
-  map(lift(choose))
+  map_dbl(lift(choose))
 ```
+The above operations do not keep track of the values of a and b. (PS: just a sidetrack, the following is not about functioning programming)
+
+```{r}
+data <- tibble(
+  a = c(7, 8, 9),
+  b = c(2, 3, 4)
+)
+```
+
+```{r}
+data %>% 
+  cross_df() %>% 
+  mutate(z = choose(a, b))  # assume the "function" is parallelizable
+```
+
+```{r}
+data %>% 
+  cross_df() %>% 
+  rowwise() %>% 
+  mutate(z = choose(a, b))  # assume the "function" is not parallelizable
+```
+
 
 
 ```{r}
@@ -610,7 +720,7 @@ dat %>%
   geom_tile()
 ```
 
-The difference is that `cross_df` doesn't handle duplications.
+The difference is that `expand` ignores duplication
 
 ```{r}
 dat <- tibble(
