@@ -213,6 +213,7 @@ summary {
 <li><a href="#capture-errors-and-warnings">Capture errors and warnings</a></li>
 <li><a href="#map-more-than-one-argument">Map more than one argument</a></li>
 <li><a href="#cross">Cross</a></li>
+<li><a href="#data-frame">Data frame</a></li>
 <li><a href="#reduce-iterable">Reduce iterable</a></li>
 </ul></li>
 <li><a href="#a-example-of-linear-regression">A example of linear regression</a></li>
@@ -361,37 +362,37 @@ a[3]</code></pre>
 df &lt;- tibble(!!!rerun(4, rnorm(10)) %&gt;% set_names(letters[seq_len(length(.))]))</code></pre>
 <p>A naive way to do so</p>
 <pre class="r"><code>median(df$a)</code></pre>
-<pre><code>## [1] -0.2151784</code></pre>
+<pre><code>## [1] 0.1996885</code></pre>
 <pre class="r"><code>median(df$b)</code></pre>
-<pre><code>## [1] 0.2741539</code></pre>
+<pre><code>## [1] 0.3588856</code></pre>
 <pre class="r"><code>median(df$c)</code></pre>
-<pre><code>## [1] -0.1016476</code></pre>
+<pre><code>## [1] -0.1556412</code></pre>
 <pre class="r"><code>median(df$d)</code></pre>
-<pre><code>## [1] 0.895397</code></pre>
+<pre><code>## [1] -0.4789026</code></pre>
 <pre class="r"><code># a base R for loop
 output &lt;- vector(&quot;double&quot;, ncol(df)) # 1. output
 for (i in seq_along(df)) { # 2. sequence
   output[i] &lt;- median(df[[i]]) # 3. body
 }
 output</code></pre>
-<pre><code>## [1] -0.2151784  0.2741539 -0.1016476  0.8953970</code></pre>
+<pre><code>## [1]  0.1996885  0.3588856 -0.1556412 -0.4789026</code></pre>
 <div id="base-r-solution" class="section level3">
 <h3>Base R solution</h3>
 <pre class="r"><code>lapply(df, median)</code></pre>
 <pre><code>## $a
-## [1] -0.2151784
+## [1] 0.1996885
 ## 
 ## $b
-## [1] 0.2741539
+## [1] 0.3588856
 ## 
 ## $c
-## [1] -0.1016476
+## [1] -0.1556412
 ## 
 ## $d
-## [1] 0.895397</code></pre>
+## [1] -0.4789026</code></pre>
 <pre class="r"><code>sapply(df, median)</code></pre>
 <pre><code>##          a          b          c          d 
-## -0.2151784  0.2741539 -0.1016476  0.8953970</code></pre>
+##  0.1996885  0.3588856 -0.1556412 -0.4789026</code></pre>
 <p>These functions are great but they are not far less powerful then the next function <code>map</code>.</p>
 </div>
 </div>
@@ -408,16 +409,16 @@ output</code></pre>
 </ul>
 <pre class="r"><code>df %&gt;% map(median)</code></pre>
 <pre><code>## $a
-## [1] -0.2151784
+## [1] 0.1996885
 ## 
 ## $b
-## [1] 0.2741539
+## [1] 0.3588856
 ## 
 ## $c
-## [1] -0.1016476
+## [1] -0.1556412
 ## 
 ## $d
-## [1] 0.895397</code></pre>
+## [1] -0.4789026</code></pre>
 <p>Cosider the version of absolute which doesn’t support vectors</p>
 <pre class="r"><code>myabs &lt;- function(x) {
   if (x &lt; 0) {
@@ -467,83 +468,83 @@ fac(5)</code></pre>
 <p>computes trimmed mean of the input.</p>
 <pre class="r"><code>df %&gt;% map(mean, trim = 0.5)</code></pre>
 <pre><code>## $a
-## [1] -0.2151784
+## [1] 0.1996885
 ## 
 ## $b
-## [1] 0.2741539
+## [1] 0.3588856
 ## 
 ## $c
-## [1] -0.1016476
+## [1] -0.1556412
 ## 
 ## $d
-## [1] 0.895397</code></pre>
+## [1] -0.4789026</code></pre>
 <pre class="r"><code>list(
   a = mean(df$a, trim = 0.5), 
   b = mean(df$b, trim = 0.5), 
   c = mean(df$c, trim = 0.5), 
   d = mean(df$d, trim = 0.5))</code></pre>
 <pre><code>## $a
-## [1] -0.2151784
+## [1] 0.1996885
 ## 
 ## $b
-## [1] 0.2741539
+## [1] 0.3588856
 ## 
 ## $c
-## [1] -0.1016476
+## [1] -0.1556412
 ## 
 ## $d
-## [1] 0.895397</code></pre>
+## [1] -0.4789026</code></pre>
 </div>
 <div id="inline-function-expressions" class="section level3">
 <h3>Inline function / expressions</h3>
 <pre class="r"><code>df %&gt;% map(function(x) x^2)</code></pre>
 <pre><code>## $a
-##  [1] 0.58903847 4.48601695 0.03941897 0.45103034 0.05373804 0.76811005
-##  [7] 0.16445731 3.75902630 1.65716063 0.51866370
+##  [1] 4.353160049 0.155324456 0.316557068 0.474820997 0.197078135 0.801166399
+##  [7] 0.027379688 0.054713391 0.004518466 0.666929243
 ## 
 ## $b
-##  [1] 0.25883975 1.04375517 3.32420024 0.03949097 0.41394167 0.11937847
-##  [7] 0.91994693 0.04112617 1.17346144 0.24526528
+##  [1] 1.347983052 0.959254358 1.397850162 0.001760587 0.010966887 0.577190455
+##  [7] 1.223208508 0.002670491 1.101279767 0.785823254
 ## 
 ## $c
-##  [1] 2.551180885 0.009211079 0.209363620 0.011517775 1.165373054 0.019859528
-##  [7] 0.278558329 2.152122384 4.060195617 1.806570880
+##  [1] 1.39872012 0.33632045 1.07095190 3.80915018 0.20934212 0.84458002
+##  [7] 0.36796095 0.07217225 0.37181455 1.11005235
 ## 
 ## $d
-##  [1] 1.911506797 1.040349820 0.878040085 1.894495312 1.097599678 0.009267304
-##  [7] 7.306577627 0.052631034 0.594161269 0.006414304</code></pre>
+##  [1] 2.1252814 1.0329659 3.3392816 0.5505225 1.6169794 0.1500377 0.1431778
+##  [8] 0.1280540 0.2061229 0.2538120</code></pre>
 <p>or</p>
 <pre class="r"><code>df %&gt;% map(function(.) .^2)</code></pre>
 <pre><code>## $a
-##  [1] 0.58903847 4.48601695 0.03941897 0.45103034 0.05373804 0.76811005
-##  [7] 0.16445731 3.75902630 1.65716063 0.51866370
+##  [1] 4.353160049 0.155324456 0.316557068 0.474820997 0.197078135 0.801166399
+##  [7] 0.027379688 0.054713391 0.004518466 0.666929243
 ## 
 ## $b
-##  [1] 0.25883975 1.04375517 3.32420024 0.03949097 0.41394167 0.11937847
-##  [7] 0.91994693 0.04112617 1.17346144 0.24526528
+##  [1] 1.347983052 0.959254358 1.397850162 0.001760587 0.010966887 0.577190455
+##  [7] 1.223208508 0.002670491 1.101279767 0.785823254
 ## 
 ## $c
-##  [1] 2.551180885 0.009211079 0.209363620 0.011517775 1.165373054 0.019859528
-##  [7] 0.278558329 2.152122384 4.060195617 1.806570880
+##  [1] 1.39872012 0.33632045 1.07095190 3.80915018 0.20934212 0.84458002
+##  [7] 0.36796095 0.07217225 0.37181455 1.11005235
 ## 
 ## $d
-##  [1] 1.911506797 1.040349820 0.878040085 1.894495312 1.097599678 0.009267304
-##  [7] 7.306577627 0.052631034 0.594161269 0.006414304</code></pre>
+##  [1] 2.1252814 1.0329659 3.3392816 0.5505225 1.6169794 0.1500377 0.1431778
+##  [8] 0.1280540 0.2061229 0.2538120</code></pre>
 <p>or simply</p>
 <pre class="r"><code>df %&gt;% map_dfc(~ .^2)</code></pre>
 <pre><code>## # A tibble: 10 x 4
-##         a      b       c       d
-##     &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
-##  1 0.589  0.259  2.55    1.91   
-##  2 4.49   1.04   0.00921 1.04   
-##  3 0.0394 3.32   0.209   0.878  
-##  4 0.451  0.0395 0.0115  1.89   
-##  5 0.0537 0.414  1.17    1.10   
-##  6 0.768  0.119  0.0199  0.00927
-##  7 0.164  0.920  0.279   7.31   
-##  8 3.76   0.0411 2.15    0.0526 
-##  9 1.66   1.17   4.06    0.594  
-## 10 0.519  0.245  1.81    0.00641</code></pre>
+##          a       b      c     d
+##      &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt;
+##  1 4.35    1.35    1.40   2.13 
+##  2 0.155   0.959   0.336  1.03 
+##  3 0.317   1.40    1.07   3.34 
+##  4 0.475   0.00176 3.81   0.551
+##  5 0.197   0.0110  0.209  1.62 
+##  6 0.801   0.577   0.845  0.150
+##  7 0.0274  1.22    0.368  0.143
+##  8 0.0547  0.00267 0.0722 0.128
+##  9 0.00452 1.10    0.372  0.206
+## 10 0.667   0.786   1.11   0.254</code></pre>
 </div>
 <div id="name-and-position-shortcuts" class="section level3">
 <h3>Name and position shortcuts</h3>
@@ -551,16 +552,16 @@ fac(5)</code></pre>
 <pre class="r"><code># extract first element from each column
 df %&gt;% map(1)</code></pre>
 <pre><code>## $a
-## [1] 0.7674884
+## [1] 2.086423
 ## 
 ## $b
-## [1] 0.508763
+## [1] 1.161027
 ## 
 ## $c
-## [1] 1.597242
+## [1] 1.182675
 ## 
 ## $d
-## [1] 1.382573</code></pre>
+## [1] -1.457834</code></pre>
 <pre class="r"><code>roster &lt;- list(
   list(name = &quot;Peter&quot;, id = 1231, grades = list(STA141A = &quot;A&quot;, STA141B = &quot;A&quot;), hobbies = c(&quot;Math&quot;, &quot;Stat&quot;)),
   list(name = &quot;Mary&quot;,  id = 4213, grades = list(STA141A = &quot;B&quot;, STA141B = &quot;B&quot;), hobbies = c(&quot;Math&quot;, &quot;Chem&quot;))
@@ -599,8 +600,8 @@ df %&gt;% map(1)</code></pre>
 <li><code>mpa_dfc()</code> makes a data frame columewise-ly</li>
 </ul>
 <pre class="r"><code>df %&gt;% map_dbl(mean)</code></pre>
-<pre><code>##           a           b           c           d 
-## -0.23225849 -0.07237837  0.32392668  0.69576966</code></pre>
+<pre><code>##          a          b          c          d 
+##  0.3418708  0.2755188 -0.1557337 -0.3269308</code></pre>
 <pre class="r"><code>1:5 %&gt;% map_int(fac)</code></pre>
 <pre><code>## [1]   1   2   6  24 120</code></pre>
 <pre class="r"><code>1:5 %&gt;% map_lgl(~ . == 2L)</code></pre>
@@ -762,7 +763,7 @@ x %&gt;%
 <p>Unlike <code>map()</code> and its variants which always return a fixed object type, the <code>modify()</code> family always returns the same type as the input object.</p>
 <pre class="r"><code>x &lt;- rnorm(5)
 x %&gt;% modify(square)</code></pre>
-<pre><code>## [1] 2.1677211 0.2947137 0.9125516 2.8905747 1.5217379</code></pre>
+<pre><code>## [1] 1.095597 2.875923 1.443680 1.153199 1.278544</code></pre>
 <pre class="r"><code># it doesn&#39;t work because 1:5 is an integer vector, while `square` produces double
 # 1:5 %&gt;% modify(square)
 as.double(1:5) %&gt;% modify(square)</code></pre>
@@ -819,18 +820,18 @@ mpg$model[3]</code></pre>
 <pre class="r"><code>mpgt[[3]]$model</code></pre>
 <pre><code>## [1] &quot;a4&quot;</code></pre>
 <pre class="r"><code>(M &lt;- matrix(rnorm(9), nrow = 3, ncol = 3))</code></pre>
-<pre><code>##           [,1]       [,2]       [,3]
-## [1,] 0.7829472  0.1056881 -1.2518323
-## [2,] 0.7550198  1.2560330 -0.3116225
-## [3,] 0.3371489 -1.7819322 -0.6477866</code></pre>
+<pre><code>##            [,1]       [,2]       [,3]
+## [1,]  1.5525464  1.1796834 -0.2884978
+## [2,]  0.1809099 -0.6255721 -0.4506721
+## [3,] -0.1455003 -0.4015739  0.6965255</code></pre>
 <pre class="r"><code># base R
 apply(M, 1, sd) # row sd&#39;s</code></pre>
-<pre><code>## [1] 1.0361684 0.8006543 1.0604157</code></pre>
+<pre><code>## [1] 0.9733128 0.4242442 0.5745148</code></pre>
 <pre class="r"><code># tidyverse version
 M %&gt;% 
   array_tree(1) %&gt;% 
   map_dbl(sd)</code></pre>
-<pre><code>## [1] 1.0361684 0.8006543 1.0604157</code></pre>
+<pre><code>## [1] 0.9733128 0.4242442 0.5745148</code></pre>
 </div>
 <div id="add-elements-to-lists" class="section level3">
 <h3>Add elements to lists</h3>
@@ -950,6 +951,9 @@ li %&gt;%
   cross() %&gt;%
   map_dbl(lift(choose))</code></pre>
 <pre><code>## [1]  21  28  36  35  56  84  35  70 126</code></pre>
+</div>
+<div id="data-frame" class="section level3">
+<h3>Data frame</h3>
 <p>The above operations do not keep track of the values of a and b. (PS: just a sidetrack, the following is not about functioning programming)</p>
 <pre class="r"><code>data &lt;- tibble(
   a = c(7, 8, 9),
@@ -1056,13 +1060,18 @@ dat %&gt;% cross_df()</code></pre>
 <div id="reduce-iterable" class="section level3">
 <h3>Reduce iterable</h3>
 <p>The <code>reduce</code> function combines the values of an iterable by iteratively applying a binary function.</p>
-<pre class="r"><code>x &lt;- 1:4
-x %&gt;% reduce(`+`)</code></pre>
+<pre class="r"><code>1:4 %&gt;% reduce(`+`)</code></pre>
 <pre><code>## [1] 10</code></pre>
 <pre class="r"><code># it means ((1 + 2) + 3) + 4
 1:4 %&gt;% reduce(`+`, .dir = &quot;backward&quot;)</code></pre>
 <pre><code>## [1] 10</code></pre>
 <pre class="r"><code># it means 1 + (2 + (3 + 4))</code></pre>
+<pre class="r"><code>1:4 %&gt;% reduce(`/`)</code></pre>
+<pre><code>## [1] 0.04166667</code></pre>
+<pre class="r"><code># it means ((1 / 2) / 3) / 4
+1:4 %&gt;% reduce(`/`, .dir = &quot;backward&quot;)</code></pre>
+<pre><code>## [1] 0.375</code></pre>
+<pre class="r"><code># it means 1 / (2 / (3 / 4))</code></pre>
 <p>It is usefully if we want to average data frames / matrices.</p>
 <pre class="r"><code>matrices &lt;- list(
   matrix(rnorm(9), nr = 3, nc = 3),
@@ -1071,35 +1080,29 @@ x %&gt;% reduce(`+`)</code></pre>
 )
 
 matrices %&gt;% reduce(`+`) %&gt;% `/`(length(matrices))</code></pre>
-<pre><code>##           [,1]       [,2]        [,3]
-## [1,] 0.8564886 -0.9918811  0.07632455
-## [2,] 0.5107472  0.4903453 -0.83923106
-## [3,] 0.3790573  0.5039881  0.31524988</code></pre>
+<pre><code>##            [,1]       [,2]        [,3]
+## [1,] -0.8290729 -0.4526473 -0.03604842
+## [2,] -0.1139158 -0.1218935  0.73584797
+## [3,]  1.1126937  0.8202906  0.04462122</code></pre>
 <pre class="r"><code>matrices %&gt;% {reduce(., `+`)/ length(.)}</code></pre>
-<pre><code>##           [,1]       [,2]        [,3]
-## [1,] 0.8564886 -0.9918811  0.07632455
-## [2,] 0.5107472  0.4903453 -0.83923106
-## [3,] 0.3790573  0.5039881  0.31524988</code></pre>
-<p>It is also useful if we wants to row bind。</p>
-<pre class="r"><code>ll &lt;- list(
-  c(name = &quot;Peter&quot;, age = 23),
-  c(name = &quot;Paul&quot;, age = 19),
-  c(name = &quot;Mary&quot;, age = 22)
-)</code></pre>
-<pre class="r"><code>bind_rows(ll)  #  it only works in dplyr 1.0</code></pre>
-<pre><code>## # A tibble: 3 x 2
-##   name  age  
-##   &lt;chr&gt; &lt;chr&gt;
-## 1 Peter 23   
-## 2 Paul  19   
-## 3 Mary  22</code></pre>
-<pre class="r"><code>ll %&gt;% reduce(bind_rows)</code></pre>
-<pre><code>## # A tibble: 3 x 2
-##   name  age  
-##   &lt;chr&gt; &lt;chr&gt;
-## 1 Peter 23   
-## 2 Paul  19   
-## 3 Mary  22</code></pre>
+<pre><code>##            [,1]       [,2]        [,3]
+## [1,] -0.8290729 -0.4526473 -0.03604842
+## [2,] -0.1139158 -0.1218935  0.73584797
+## [3,]  1.1126937  0.8202906  0.04462122</code></pre>
+<pre class="r"><code>c(1, 4, 10) %&gt;% accumulate(`+`)</code></pre>
+<pre><code>## [1]  1  5 15</code></pre>
+<p>To stop earlier, consider the <code>done</code> function,</p>
+<pre class="r"><code>concat &lt;- function(a, b) {
+  if (nchar(a) &gt; 4) {
+    return(done(a))
+  }
+  str_c(a, &quot;.&quot; ,b)
+}
+
+letters %&gt;% reduce(concat)</code></pre>
+<pre><code>## [1] &quot;a.b.c&quot;</code></pre>
+<pre class="r"><code>letters %&gt;% accumulate(concat)</code></pre>
+<pre><code>## [1] &quot;a&quot;     &quot;a.b&quot;   &quot;a.b.c&quot; &quot;a.b.c&quot;</code></pre>
 </div>
 </div>
 <div id="a-example-of-linear-regression" class="section level2">
@@ -1107,14 +1110,14 @@ matrices %&gt;% reduce(`+`) %&gt;% `/`(length(matrices))</code></pre>
 <pre class="r"><code>mtcars %&gt;%
   nest(data = -cyl) %&gt;% 
   mutate(model = map(data, ~ lm(mpg ~ wt, data = .))) %&gt;%
-  transmute(cyl, r_sq = model %&gt;% map(summary) %&gt;% map_dbl(&quot;r.squared&quot;))</code></pre>
+  transmute(cyl, r_sq = model %&gt;% map_dbl(list(summary, &quot;r.squared&quot;)))</code></pre>
 <pre><code>## # A tibble: 3 x 2
 ##     cyl  r_sq
 ##   &lt;dbl&gt; &lt;dbl&gt;
 ## 1     6 0.465
 ## 2     4 0.509
 ## 3     8 0.423</code></pre>
-<pre class="r"><code># it is more readible
+<pre class="r"><code># it is more readable
 mtcars %&gt;%
   group_by(cyl) %&gt;%
   nest() %&gt;%
@@ -1139,11 +1142,12 @@ addy &lt;- function(x) {
 addy(3)</code></pre>
 <pre><code>## [1] 5</code></pre>
 <pre class="r"><code>foo &lt;- function(x) {
+  y &lt;- 1
   addy(x)
 }
 foo(3)</code></pre>
 <pre><code>## [1] 5</code></pre>
-<p><code>foo(3)</code> returns 3 because <code>addy</code> was defined in the global environment (the enclosing environment of <code>addy</code>).</p>
+<p><code>foo(3)</code> returns 5 instead of 4 because <code>addy</code> was defined in the global environment (the enclosing environment of <code>addy</code>).</p>
 <p>The look up is dynamic though,</p>
 <pre class="r"><code>y &lt;- 4
 addy(3)</code></pre>
@@ -1158,12 +1162,12 @@ addy &lt;- function(x) {
 }
 
 bar &lt;- function(x) {
-  y &lt;- 4
+  y &lt;- 1
   addy(x)
 }
 bar(3)</code></pre>
 <pre><code>## [1] 5</code></pre>
-<p><code>bar(3)</code> returns 3 because of the lexical scroping rules of <code>addy</code>. However, we could change the scope rule by overriding the enclosing environment of a function.</p>
+<p><code>bar(3)</code> returns 5 because of the lexical scoping rules of <code>addy</code>. However, we could change the scope rule by overriding the enclosing environment of a function.</p>
 <pre class="r"><code>bar &lt;- function(x) {
   y &lt;- 4
   environment(addy) &lt;- environment()
@@ -1174,33 +1178,34 @@ bar(3)</code></pre>
 </div>
 <div id="lazy-evaluation" class="section level3">
 <h3>Lazy evaluation</h3>
-<p>In R, an expression is only evaluted when it is needed.</p>
-<pre class="r"><code>one &lt;- function() {
-  cat(&quot;called one\n&quot;)
-  1
+<p>In R, an expression is only evaluated when it is needed.</p>
+<pre class="r"><code>two &lt;- function() {
+  cat(&quot;called two\n&quot;)
+  2
 }
 
 square &lt;- function(x) {
   cat(&quot;called square\n&quot;)
   x^2
 }
-square(one())</code></pre>
+
+square(two())</code></pre>
 <pre><code>## called square
-## called one</code></pre>
-<pre><code>## [1] 1</code></pre>
-<p>For comparsion, python is eager.</p>
-<pre class="python"><code>def one():
-  print(&quot;called one&quot;)
-  return 1
+## called two</code></pre>
+<pre><code>## [1] 4</code></pre>
+<p>For comparison, python is eager.</p>
+<pre class="python"><code>def two():
+  print(&quot;called two&quot;)
+  return 2
 
 def square(x):
   print(&quot;call square&quot;)
   return x**2
   
-square(one())</code></pre>
-<pre><code>## called one
+square(two())</code></pre>
+<pre><code>## called two
 ## call square
-## 1</code></pre>
+## 4</code></pre>
 <p>R could do a lot of interesting things with lazy evaluation.</p>
 <pre class="r"><code>echo &lt;- function(x) {
   cat(&quot;you typed\n&quot;)
@@ -1231,6 +1236,9 @@ echo(it + does - not == have * to / make ^ sense)</code></pre>
 square &lt;- pow(2)
 square(5)</code></pre>
 <pre><code>## [1] 25</code></pre>
+<pre class="r"><code>cube &lt;- pow(3)
+cube(5)</code></pre>
+<pre><code>## [1] 125</code></pre>
 <pre class="r"><code>pow2 &lt;- function(k) {
   function(x) {
     x^k
@@ -1244,6 +1252,7 @@ h &lt;- 3
 square(2)  # 2^3</code></pre>
 <pre><code>## [1] 8</code></pre>
 <pre class="r"><code>h &lt;- 4
+# from previous call, h = 3
 square(2)  # 2^3</code></pre>
 <pre><code>## [1] 8</code></pre></li>
 </ul></li>
@@ -1252,6 +1261,20 @@ square(2)  # 2^3</code></pre>
 <li>function that has function input(s) and returns a function. For examples, <code>lift</code>, <code>safely</code>.</li>
 </ul></li>
 </ul>
+<pre class="r"><code>choose(5, 2)</code></pre>
+<pre><code>## [1] 10</code></pre>
+<pre class="r"><code>lifted_choose &lt;- lift(choose)
+lifted_choose(list(5, 2))</code></pre>
+<pre><code>## [1] 10</code></pre>
+<pre class="r"><code>log(2)</code></pre>
+<pre><code>## [1] 0.6931472</code></pre>
+<pre class="r"><code>safely_log &lt;- safely(log)
+safely_log(&quot;a&quot;)</code></pre>
+<pre><code>## $result
+## NULL
+## 
+## $error
+## &lt;simpleError in .Primitive(&quot;log&quot;)(x, base): non-numeric argument to mathematical function&gt;</code></pre>
 </div>
 </div>
 <div id="references" class="section level1">

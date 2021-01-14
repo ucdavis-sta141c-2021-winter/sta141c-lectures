@@ -665,6 +665,9 @@ li %>%
   cross() %>%
   map_dbl(lift(choose))
 ```
+
+### Data frame
+
 The above operations do not keep track of the values of a and b. (PS: just a sidetrack, the following is not about functioning programming)
 
 ```{r}
@@ -737,12 +740,18 @@ dat %>% expand(x, y)
 The `reduce` function combines the values of an iterable by iteratively applying a binary function.
 
 ```{r}
-x <- 1:4
-x %>% reduce(`+`)
+1:4 %>% reduce(`+`)
 # it means ((1 + 2) + 3) + 4
 1:4 %>% reduce(`+`, .dir = "backward")
 # it means 1 + (2 + (3 + 4))
 ```
+```{r}
+1:4 %>% reduce(`/`)
+# it means ((1 / 2) / 3) / 4
+1:4 %>% reduce(`/`, .dir = "backward")
+# it means 1 / (2 / (3 / 4))
+```
+
 
 
 It is usefully if we want to average data frames / matrices.
@@ -758,20 +767,22 @@ matrices %>% reduce(`+`) %>% `/`(length(matrices))
 matrices %>% {reduce(., `+`)/ length(.)}
 ```
 
-
-It is also useful if we wants to row bind。
-
 ```{r}
-ll <- list(
-  c(name = "Peter", age = 23),
-  c(name = "Paul", age = 19),
-  c(name = "Mary", age = 22)
-)
+c(1, 4, 10) %>% accumulate(`+`)
 ```
 
-```{r, error = TRUE}
-bind_rows(ll)  #  it only works in dplyr 1.0
-ll %>% reduce(bind_rows)
+
+To stop earlier, consider the `done` function,
+```{r}
+concat <- function(a, b) {
+  if (nchar(a) > 4) {
+    return(done(a))
+  }
+  str_c(a, "." ,b)
+}
+
+letters %>% reduce(concat)
+letters %>% accumulate(concat)
 ```
 
 
@@ -782,12 +793,12 @@ ll %>% reduce(bind_rows)
 mtcars %>%
   nest(data = -cyl) %>% 
   mutate(model = map(data, ~ lm(mpg ~ wt, data = .))) %>%
-  transmute(cyl, r_sq = model %>% map(summary) %>% map_dbl("r.squared"))
+  transmute(cyl, r_sq = model %>% map_dbl(list(summary, "r.squared")))
 ```
 
 
 ```{r}
-# it is more readible
+# it is more readable
 mtcars %>%
   group_by(cyl) %>%
   nest() %>%
@@ -809,12 +820,13 @@ addy(3)
 
 ```{r}
 foo <- function(x) {
+  y <- 1
   addy(x)
 }
 foo(3)
 ```
 
-`foo(3)` returns 3 because `addy` was defined in the global environment (the enclosing environment of `addy`).
+`foo(3)` returns 5 instead of 4 because `addy` was defined in the global environment (the enclosing environment of `addy`).
 
 
 The look up is dynamic though,
@@ -835,13 +847,13 @@ addy <- function(x) {
 }
 
 bar <- function(x) {
-  y <- 4
+  y <- 1
   addy(x)
 }
 bar(3)
 ```
 
-`bar(3)` returns 3 because of the lexical scroping rules of `addy`. However, we could change the scope rule by overriding the enclosing environment of a function.
+`bar(3)` returns 5 because of the lexical scoping rules of `addy`. However, we could change the scope rule by overriding the enclosing environment of a function.
 
 ```{r}
 bar <- function(x) {
@@ -855,32 +867,33 @@ bar(3)
 
 ### Lazy evaluation
 
-In R, an expression is only evaluted when it is needed.
+In R, an expression is only evaluated when it is needed.
 
 ```{r}
-one <- function() {
-  cat("called one\n")
-  1
+two <- function() {
+  cat("called two\n")
+  2
 }
 
 square <- function(x) {
   cat("called square\n")
   x^2
 }
-square(one())
+
+square(two())
 ```
 
-For comparsion, python is eager.
+For comparison, python is eager.
 ```{python}
-def one():
-  print("called one")
-  return 1
+def two():
+  print("called two")
+  return 2
 
 def square(x):
   print("call square")
   return x**2
   
-square(one())
+square(two())
 ```
 
 R could do a lot of interesting things with lazy evaluation.
@@ -912,6 +925,8 @@ We end this chapter with several terminology.
     }
     square <- pow(2)
     square(5)
+    cube <- pow(3)
+    cube(5)
     ```
 
     ```{r}
@@ -928,11 +943,24 @@ We end this chapter with several terminology.
     square(2)  # 2^3
 
     h <- 4
+    # from previous call, h = 3
     square(2)  # 2^3
     ```
 
 - function operators
   - function that has function input(s) and returns a function. For examples, `lift`, `safely`.
+
+```{r}
+choose(5, 2)
+lifted_choose <- lift(choose)
+lifted_choose(list(5, 2))
+```
+
+```{r}
+log(2)
+safely_log <- safely(log)
+safely_log("a")
+```
 
 
 
