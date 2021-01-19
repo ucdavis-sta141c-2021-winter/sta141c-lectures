@@ -30,10 +30,12 @@
 
 ## Material
 
-| Date  | Note                                           | HTML                                                                                          |
-| ----- | ---------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| 01-05 | Introduction                                   | [introduction](README.md)                                                                     |
-| 01-07 | [functional programming](ch01-purrr/purrr.Rmd) | [purrr](https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch01-purrr/purrr.html) |
+| Date  | Note                                           | HTML                                                                                                      |
+| ----- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| 01-05 | Introduction                                   | [introduction](README.md)                                                                                 |
+| 01-07 | [functional programming](ch01-purrr/purrr.Rmd) | [purrr](https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch01-purrr/purrr.html)             |
+| 01-19 | [debug](ch02-debug-profile/debug.Rmd)          | [debug](https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch02-debug-profile/debug.html)     |
+|       | [profile](ch02-debug-profile/profile.Rmd)      | [profile](https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch02-debug-profile/profile.html) |
 
 ## Links
 
@@ -59,7 +61,7 @@
 | ---------------------------------- |
 | Introduction                       |
 | Functional programming             |
-| Object Oriented programming        |
+| ~~Object Oriented programming~~    |
 | Debugging and profiling            |
 | Writing C and C++ extensions       |
 | Writing an R package               |
