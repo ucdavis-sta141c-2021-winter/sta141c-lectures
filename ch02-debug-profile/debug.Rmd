@@ -1,0 +1,121 @@
+---
+title: "Debugging in R"
+output: 
+  html_document: 
+    toc: yes
+editor_options: 
+  chunk_output_type: console
+---
+
+
+# Debugging
+
+Jenny Bryan gave a very good talk in [RStudio conf 2020](https://resources.rstudio.com/rstudio-conf-2020/object-of-type-closure-is-not-subsettable-jenny-bryan).
+
+- reset<br>
+  Jenny recommands [not saving .Rdata](https://speakerdeck.com/jennybc/object-of-type-closure-is-not-subsettable?slide=12) on exit.
+- reprex<br>
+  `reprex` is a package which makes reproducible examples.
+- debug<br>
+  the main focus of this chapter
+- deter<br>
+  Fix it once? Keep it fixed.
+
+
+## Different types of erros
+
+- syntax / parsing error
+- runtime error
+
+
+## Locating errors
+
+```{r, error = TRUE}
+f <- function(a) g(a)
+g <- function(b) h(b)
+h <- function(c) i(c)
+i <- function(d) {
+  if (!is.numeric(d)) {
+    stop("`d` must be numeric", call. = FALSE)
+  }
+  d + 10
+}
+f("a")
+```
+
+See also `debug.R` demonstration.
+
+
+## Lazy evaluation
+
+```{r, error = TRUE}
+j <- function() k()
+k <- function() stop("Oops!", call. = FALSE)
+f(j())
+```
+```{r, error = TRUE}
+rlang::with_abort(f(j()))
+rlang::last_trace()
+```
+
+## Using `recover()`
+
+By setting ,
+```{r, eval = FALSE}
+options(error = recover)
+```
+a interactive prompt will be displayed that you get an error.
+
+
+## Interactive debugger in RStudio
+
+When we encounter an error, we could hit `Rerun with Debug` in RStudio to start interactive debugging. 
+
+```{r, error = TRUE}
+f("a")
+```
+
+Sometimes, we know something is definitely wrong but the code runs fine. 
+
+## Interactive debugger elsewhere
+
+### `browser()`
+
+When `browser()` is run, a interactive prompt will be shown.
+
+```{r}
+g <- function(b) {
+  browser()
+  h(b)
+}
+g("a")
+```
+
+`browser()` is a regular function call which means that you can run it conditionally
+
+```{r, eval = FALSE}
+g <- function(b) {
+  if (b < 0) {
+    browser()
+  }
+  h(b)
+}
+g(10)
+```
+
+See `debug2.R` for demonstration.
+
+### `debug()` and `debugonce()`
+
+
+`debug` takes a single argument, the name of a function. When you pass the name of
+a function to debug, that function is flagged for debugging.
+
+See `debug3.R` for demonstration.
+
+See `debug4.R` for demonstration.
+
+
+# Reference
+
+Advanced R Chapter 22 https://adv-r.hadley.nz/debugging.html
