@@ -25,11 +25,14 @@ output:
 | 01-07               | [functional programming](ch01-purrr/purrr.Rmd)  | [purrr]
 | 01-19               | [debug](ch02-debug-profile/debug.Rmd)  | [debug]
 |                | [profile](ch02-debug-profile/profile.Rmd)  | [profile]
+| 01-25               | [Rcpp](ch03-rcpp/rcpp.Rmd)  | [Rcpp]
+
 
 [introduction]: README.md
 [purrr]: https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch01-purrr/purrr.html
 [debug]: https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch02-debug-profile/debug.html
 [profile]: https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch02-debug-profile/profile.html
+[Rcpp]: https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch03-rcpp/rcpp.html
 
 
 ## Links
