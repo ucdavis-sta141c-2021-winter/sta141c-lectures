@@ -13,7 +13,7 @@ editor_options:
 Jenny Bryan gave a very good talk in [RStudio conf 2020](https://resources.rstudio.com/rstudio-conf-2020/object-of-type-closure-is-not-subsettable-jenny-bryan).
 
 - reset<br>
-  Jenny recommands [not saving .Rdata](https://speakerdeck.com/jennybc/object-of-type-closure-is-not-subsettable?slide=12) on exit.
+  Jenny recommends [not saving .Rdata](https://speakerdeck.com/jennybc/object-of-type-closure-is-not-subsettable?slide=12) on exit.
 - reprex<br>
   `reprex` is a package which makes reproducible examples.
 - debug<br>
@@ -22,10 +22,11 @@ Jenny Bryan gave a very good talk in [RStudio conf 2020](https://resources.rstud
   Fix it once? Keep it fixed.
 
 
-## Different types of erros
+## Different types of errors
 
 - syntax / parsing error
 - runtime error
+- logical error
 
 
 ## Locating errors
@@ -39,6 +40,7 @@ i <- function(d) {
     stop("`d` must be numeric", call. = FALSE)
   }
   d + 10
+  
 }
 f("a")
 ```
@@ -62,9 +64,15 @@ rlang::last_trace()
 
 By setting ,
 ```{r, eval = FALSE}
+original_error_handler = getOption("error")
 options(error = recover)
 ```
 a interactive prompt will be displayed that you get an error.
+
+```{r, eval = FALSE}
+# restore the original error handler
+options(error = original_error_handler)
+```
 
 
 ## Interactive debugger in RStudio
@@ -88,7 +96,7 @@ g <- function(b) {
   browser()
   h(b)
 }
-g("a")
+f("a")
 ```
 
 `browser()` is a regular function call which means that you can run it conditionally

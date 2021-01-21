@@ -36,7 +36,7 @@ generate_and_fit(1e7) #  it is quite slow
 
 ### `system.time`
 
-The easier tool to do profiling perhaps is the `system.time` function. It reports the amount of time elasped.
+The easier tool to do profiling perhaps is the `system.time` function. It reports the amount of time elapsed.
 
 ```{r}
 system.time(generate_and_fit(1e7))
@@ -115,8 +115,6 @@ profvis({
 interval = 0.0005)
 ```
 
-`compiler` is an R package doing just in time (JIT) compilation.
-
 
 ## Microbenchmark
 
@@ -124,14 +122,14 @@ A microbenchmark is a measurement of the performance of a very small piece of co
 
 The following code compares the speed of two approaches to computing a square root.
 
-```{r}
+```{r paged.print = FALSE}
 x <- runif(100)
 bench::mark(
   sqrt(x),
   x^0.5
 )
 ```
-```{r}
+```{r paged.print = FALSE}
 bench::mark(
   sqrt(x),
   x^0.5,
@@ -145,7 +143,7 @@ bench::mark(
 ### Revisit the `map` example.
 
 ```{r, paged.print = FALSE}
-n <- 1e3
+n <- 1e5
 bench::mark(
   `for loop` = {
     x <- integer(n)
@@ -198,7 +196,7 @@ NumericVector slr_cpp(NumericVector x, NumericVector y) {
 Remark: No worries, we will cover Rcpp later.
 
 
-```{r, cached = TRUE}
+```{r, paged_print = FALSE}
 x <- runif(1e7)
 y <- runif(1e7)
 
