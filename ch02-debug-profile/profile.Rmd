@@ -12,7 +12,6 @@ library(profvis)
 library(bench)
 ```
 
-
 # Profiling
 
 [Donald Knuth](https://en.wikipedia.org/wiki/Donald_Knuth) has famously said
@@ -42,7 +41,7 @@ The easier tool to do profiling perhaps is the `system.time` function. It report
 system.time(generate_and_fit(1e7))
 ```
 
-See https://en.wikipedia.org/wiki/Time_(Unix)#User_time_vs_system_time for the differences between user and system times. (TLDR, they are not very relevant to us.)
+See [https://en.wikipedia.org/wiki/Time\_(Unix)\#User_time_vs_system_time](https://en.wikipedia.org/wiki/Time_(Unix)#User_time_vs_system_time){.uri} for the differences between user and system times. (TLDR, they are not very relevant to us.)
 
 ### `Rprof`
 
@@ -62,19 +61,18 @@ result$by.self
 ```{r}
 result$by.total
 ```
+
 It seems that most of the time was spent in `lm.fit`. `help(lm.fit)` says
 
-> These are the basic computing engines called by lm used to fit linear models. These should usually not be used directly unless by experienced users. 
-
+> These are the basic computing engines called by lm used to fit linear models. These should usually not be used directly unless by experienced users.
 
 ### Visualising profiles
 
+There are two ways to use `profvis`:
 
-There are two ways to use profvis:
+-   From the Profile menu in RStudio.
 
-- From the Profile menu in RStudio.
-
-- Use the `profvis` function
+-   Use the `profvis` function
 
 ```{r}
 profvis(generate_and_fit(1e7))
@@ -83,7 +81,13 @@ profvis(generate_and_fit(1e7))
 
 ### Memory profiling
 
-When an object in R is not referenced by any other objects, it will get GC'ed (garbage collected). If `GC` is taking a lot of time, it’s usually an indication that you’re creating many short-lived objects.
+When an object in R is not referenced by any other objects, it will get GC'ed (garbage collected). If `GC` is taking a lot of time, it's usually an indication that you're creating many short-lived objects.
+
+```{r}
+x <- runif(10000000)
+x <- NULL
+```
+
 
 ```{r}
 # suppose `f` is a function given to you.
@@ -92,22 +96,23 @@ draw <- sample.int(n, 10)
 f <- function(x) x %in% draw
 ```
 
+
 ```{r}
 profvis({
-  x <- integer()
+  x <- logical()
   for (i in 1:n) {
     x <- c(x, f(i))
   }
 })
 ```
-Each time when `x <- c(x, i)` is execulated, the previous `x` is de-referenced and marked as pending to be GC'ed. R will GC those `x`'s at some point down the line.
 
+Each time when `x <- c(x, i)` is executed, the previous `x` is de-referenced and marked as pending to be GC'ed. R will GC those `x`'s at some point down the line.
 
 So a better approach? In the following code, the vector `x` is pre-allocated.
 
 ```{r}
 profvis({
-  x <- integer(n)
+  x <- logical(n)
   for (i in 1:n) {
     x[i] <- f(i)
   }
@@ -115,20 +120,20 @@ profvis({
 interval = 0.0005)
 ```
 
-
 ## Microbenchmark
 
-A microbenchmark is a measurement of the performance of a very small piece of code.
+A micro benchmark is a measurement of the performance of a very small piece of code.
 
 The following code compares the speed of two approaches to computing a square root.
 
-```{r paged.print = FALSE}
+```{r paged.print=FALSE}
 x <- runif(100)
 bench::mark(
   sqrt(x),
   x^0.5
 )
 ```
+
 ```{r paged.print = FALSE}
 bench::mark(
   sqrt(x),
@@ -140,31 +145,30 @@ bench::mark(
 `sqrt(x)` is is about 5x faster than `x ^ 0.5`
 
 
-### Revisit the `map` example.
+### Revisit the draw example.
 
 ```{r, paged.print = FALSE}
 n <- 1e5
-bench::mark(
+res <- bench::mark(
   `for loop` = {
-    x <- integer(n)
+    x <- logical(n)
     for (i in 1:n) {
       x[i] <- f(i)
     }
     x
   },
-  modify = modify(1:n, f),
-  map = map_int(1:n, f)
+  map = map_lgl(1:n, f),
+  sapply = sapply(1:n, f)
 )
 ```
-
 
 ### A simple linear regression example
 
 We want to compare several ways to perform simple linear regression.
 
-- pure R function
-- Rcpp
-- `lm`
+-   pure R function
+-   Rcpp
+-   `lm`
 
 ```{r}
 slr <- function(x, y) {
@@ -193,8 +197,8 @@ NumericVector slr_cpp(NumericVector x, NumericVector y) {
   return NumericVector::create(intercept, slope);
 }
 ```
-Remark: No worries, we will cover Rcpp later.
 
+Remark: No worries, we will cover Rcpp later.
 
 ```{r, paged_print = FALSE}
 x <- runif(1e7)
@@ -204,24 +208,17 @@ y <- runif(1e7)
   slr = slr(x, y),
   slr_cpp = slr_cpp(x, y),
   lm = coef(lm(y ~ x)),
-  check = FALSE
+  check = FALSE,
+  iterations = 3
 ))
 autoplot(result)
 ```
 
-
-There are three levels of collections. 
-- level 0 collects only the youngest generation
-- level 1 collects the two youngest generations
-- level 2 collects all generations.
+There are three levels of collections. - level 0 collects only the youngest generation - level 1 collects the two youngest generations - level 2 collects all generations.
 
 After 20 level-0 collections the next collection is at level 1, and after 5 level-1 collections at level 2.
 
-
-
 # Reference
 
-- Advanced R https://adv-r.hadley.nz/perf-measure.html
-- R Programming for Data Science https://bookdown.org/rdpeng/rprogdatascience/profiling-r-code.html
-
-
+-   Advanced R <https://adv-r.hadley.nz/perf-measure.html>
+-   R Programming for Data Science <https://bookdown.org/rdpeng/rprogdatascience/profiling-r-code.html>

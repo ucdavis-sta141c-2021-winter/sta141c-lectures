@@ -3,3 +3,4 @@
 .RData
 .Ruserdata
 ch03-rcpp/rcpp_cache
+/ch02-debug-profile/Rprof.out
