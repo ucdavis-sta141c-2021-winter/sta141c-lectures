@@ -20,7 +20,7 @@ To run c++ code in R, you will need to first install a workable toolchain.
 - Windows
   - Install Rtools
     - R 3.6.x: https://cran.r-project.org/bin/windows/Rtools/history.html
-    - R 4.0.x https://cran.r-project.org/bin/windows/Rtools
+    - R 4.0.x: https://cran.r-project.org/bin/windows/Rtools
 - macOS
   - Run `which clang` in terminal to see if you have already installed it
   - If not, run `xcode-select --install` to install it.
@@ -84,14 +84,15 @@ The next example function implements a scalar version of the `sign()` function w
 ```{r}
 signR <- function(x) {
   if (x > 0) {
-    1
+    1L
   } else if (x == 0) {
-    0
+    0L
   } else {
-    -1
+    -1L
   }
 }
 ```
+
 
 ```{Rcpp}
 // [[Rcpp::export]]
@@ -106,13 +107,34 @@ int signC(int x) {
 }
 ```
 
+```{r}
+signC(0.8) # truncated to signC(0)
+```
+
+
 - We declare the type of each input in the same way we declare the type of the output. 
 - The `if` syntax is identical. 
 - The `while` loop syntax is almost the same, we use `break` to break the loop but use `continue` instead of `next` skip current iteration.
 
+```{r}
+while_exR <- function(x) {
+  while(x < 9) {
+    x <- x + 1
+    if (x == 7) {
+      break
+    }
+  }
+  x
+}
+while_exR(1)
+while_exR(7)
+while_exR(10)
+```
+
+
 ```{Rcpp}
 // [[Rcpp::export]]
-int while_ex(int x) {
+int while_exC(int x) {
   while(x < 9) {
     x = x + 1;
     if (x == 7) {
@@ -124,14 +146,14 @@ int while_ex(int x) {
 ```
 
 ```{r}
-while_ex(1)
-while_ex(7)
-while_ex(10)
+while_exC(1)
+while_exC(7)
+while_exC(10)
 ```
 
 ### Vector input, scalar output
 
-It is where things get compicated.
+It is where things get complicated.
 
 ```{r}
 # it is the inefficient version of the function `sum`
@@ -190,7 +212,6 @@ Of course `sum` is the fastest because it is highly optimized.
 
 
 
-
 ### Vector input, vector output
 
 This is a function that computes the Euclidean distance between a value and a vector of values:
@@ -199,9 +220,25 @@ This is a function that computes the Euclidean distance between a value and a ve
 pdistR <- function(x, ys) {
   sqrt((x - ys) ^ 2)
 }
+```
+
+```{r}
 y <- runif(1e5)
 # pdistR(0.5, y)
 ```
+
+First, we translate the R function to a more naive R function based on a for loop.
+```{r}
+pdistR2 <- function(x, ys) {
+  n <- length(ys)
+  out <- numeric(length = n)
+  for (i in seq_along(ys)) {
+    out[i] = sqrt((x - ys[i]) ^ 2)
+  }
+  out
+}
+```
+
 
 ```{Rcpp}
 #include <Rcpp.h>
@@ -226,16 +263,16 @@ NumericVector pdistC(double x, NumericVector ys) {
 
 
 ```{r, paged.print = FALSE}
-y <- runif(1e6)
+y <- runif(1e7)
 result <- bench::mark(
   pdistR(0.5, y),
+  pdistR2(0.5, y),
   pdistC(0.5, y)
 )
 result
 ```
 
-
-- We saved about `5ms` by rewriting the R function in C++. Assume it takes 5 mins for you to write that function, you’d need to run it ~60 000 times to make rewriting worthwhile. 
+- We saved about `1.6ms` by rewriting the R function in C++. Assume it takes 5 mins for you to write that function, you’d need to run it ~200 000 times to make rewriting worthwhile. 
 
 
 ### Sugar functions
@@ -252,7 +289,7 @@ using namespace Rcpp;
 NumericVector slr_cpp(NumericVector x, NumericVector y) {
   double mux = mean(x);
   double muy = mean(y);
-  double sxy = sum((x - mux)*(y - muy));
+  double sxy = sum((x - mux) * (y - muy));
   double sxx = sum(pow(x - mux, 2));
   double slope = sxy / sxx;
   double intercept = muy - slope * mux;
@@ -284,7 +321,7 @@ bench::mark(
 )
 ```
 
-`pdistC_sugar` is the slowest among the three versions. The slowness is due to the creation of temporary objects such as `ys-x` and `pow(ys - x, 2.0)`.
+`pdistC_sugar` is the slowest among the three versions. The slowness is due to the creation of temporary objects such as `ys - x` and `pow(ys - x, 2.0)`.
 
 ### More on Vector Subsetting
 
@@ -346,7 +383,7 @@ bench::mark(
 )
 ```
 
-I'm curiously the performance of a native Rcpp. The function `R_IsNA` is a c function that checks if a number is NA.
+Of course, surgar functions could be slow. Instead, we could consider the function `R_IsNA` that checks if a number is NA.
 
 ```{Rcpp}
 #include <Rcpp.h>
@@ -375,10 +412,10 @@ autoplot(bench::mark(
   R_no_na(x),
   no_na(x),
   no_na_fast(x)
-))
+), type = "violin")
 ```
 
-Again, we see that a native for loop is faster.
+Again, we see that a naive for loop is faster.
 
 
 ### Values could be modified in place!!
@@ -400,7 +437,7 @@ lobstr::obj_addr(y)
 In R, values are not modified in place
 
 
-With cloning the object, any changes in C++ may modify the values in R.
+Without cloning the object, any changes in C++ may modify the values in R.
 
 ```{Rcpp}
 #include <Rcpp.h>
