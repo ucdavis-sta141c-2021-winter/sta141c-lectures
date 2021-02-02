@@ -37,6 +37,7 @@
 | 01-19 | [debug](ch02-debug-profile/debug.Rmd)          | [debug](https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch02-debug-profile/debug.html)     |
 |       | [profile](ch02-debug-profile/profile.Rmd)      | [profile](https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch02-debug-profile/profile.html) |
 | 01-25 | [Rcpp](ch03-rcpp/rcpp.Rmd)                     | [Rcpp](https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch03-rcpp/rcpp.html)                |
+| 02-02 | [R-pkgs](https://r-pkgs.org/)                  |                                                                                                           |
 
 ## Links
 
