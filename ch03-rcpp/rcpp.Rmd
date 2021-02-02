@@ -218,6 +218,7 @@ This is a function that computes the Euclidean distance between a value and a ve
 
 ```{r}
 pdistR <- function(x, ys) {
+  # abs(x - ys)
   sqrt((x - ys) ^ 2)
 }
 ```
@@ -298,7 +299,7 @@ NumericVector slr_cpp(NumericVector x, NumericVector y) {
 ```
 
 
-#### Caution
+#### Revisit `pdistC` function
 
 Using sugar functions could be even slower than R functions.
 
@@ -383,7 +384,7 @@ bench::mark(
 )
 ```
 
-Of course, surgar functions could be slow. Instead, we could consider the function `R_IsNA` that checks if a number is NA.
+Of course, sugar functions could be slow. Instead, we could consider the function `R_IsNA` that checks if a number is NA.
 
 ```{Rcpp}
 #include <Rcpp.h>
@@ -392,7 +393,7 @@ using namespace Rcpp;
 // [[Rcpp::export]]
 NumericVector no_na_fast(NumericVector x) {
   int n = x.size();
-  int m = 0;
+  int m = 0;  // the length of the output
   int i, j = 0;
   for (i = 0; i < n; i++) {
     m += !R_IsNA(x[i]);
@@ -423,17 +424,12 @@ Again, we see that a naive for loop is faster.
 ```{r}
 x <- 1:10
 lobstr::obj_addr(x)
-y <- x
+y <- x  # immutable
 lobstr::obj_addr(y)
-y[2] <- 3
+y[2] <- 42
+lobstr::obj_addr(y)
 ```
 
-```{r}
-lobstr::obj_addr(x)
-```
-```{r}
-lobstr::obj_addr(y)
-```
 In R, values are not modified in place
 
 
@@ -445,7 +441,7 @@ using namespace Rcpp;
 
 // [[Rcpp::export]]
 void modifyVec(NumericVector x) {
-  x[0] = 42;
+  x[1] = 42;
 }
 ```
 PS: we use `void` because there are no return values.
@@ -460,12 +456,13 @@ lobstr::obj_addr(x)
 modifyVec(x)
 x
 ```
+
 ```{r}
 lobstr::obj_addr(x)
 ```
 
 
-However, this side effect does not work if there is implict conversion.
+However, this side effect does not work if there is implicit conversion.
 
 ```{Rcpp}
 #include <Rcpp.h>
@@ -480,6 +477,8 @@ void modifyVec2(IntegerVector x) {
 ```{r}
 x <- c(3, 5)  # it is double
 modifyVec2(x)  # a converted vector is passed to C++
+# x_int <- as.integer(x)
+# modifyVec2(x_int)
 x
 ```
 
@@ -500,12 +499,12 @@ Our next example is to compute column sum of a matrix. (This example is for demo
 
 ```{r}
 colSumsR <- function(x) {
-  m <- ncol(x)
-  n <- nrow(x)
-  output <- double(m)
-  for (j in seq_len(m)) {
+  m <- nrow(x)
+  n <- ncol(x)
+  output <- double(n)
+  for (j in seq_len(n)) {
     output[j] = 0
-    for (i in seq_len(n))
+    for (i in seq_len(m))
       output[j] = output[j] + x[i, j]
   }
   output
@@ -514,7 +513,7 @@ colSumsR <- function(x) {
 
 
 ```{r}
-(x <- matrix(rnorm(9), nc = 3))
+(x <- matrix(rnorm(12), nc = 3))
 colSumsR(x)
 ```
 
@@ -628,16 +627,17 @@ df
 
 ### List input
 
-This is again not a good example because the same task could be easily done in R. It calcualtes the mean percentage error (`mpe()`) of a linear model.
+This is again not a good example because the same task could be easily done in R. It calculates the mean percentage error (`mpe()`) of a linear model.
 
 ```{r}
 mod <- lm(mpg ~ wt, data = mtcars)
+mean(mod$residuals / mtcars$mpg)
 ```
 
 ```{r}
 mpeR <- function(mod) {
   if (!inherits(mod, "lm")) {
-    stop("Input must be a linear model")
+    stop("Input must be a linear model", call. = FALSE)
   }
   mean(mod$residuals / (mod$fitted.values + mod$residuals))
 }
@@ -672,6 +672,13 @@ double mpe(List mod) {
 ```{r}
 mpe(mod)
 ```
+```{r paged.print = FALSE}
+bench::mark(
+  mpe(mod),
+  mpeR(mod)
+)
+```
+
 
 ### Pass user function to Rcpp
 
@@ -683,7 +690,7 @@ using namespace Rcpp;
 RObject callWithTwo(Function f) {
   RObject f2 = f(2);
   // if you want to use named argument
-  // return f(_["x"] = 2);
+  // f(_["x"] = 2);
   return f2;
 }
 
@@ -699,13 +706,14 @@ PS: we use `RObject` because we don't know what it returns.
 ```{r}
 f <- function(x) x + 1
 g <- function(x) 3^x
+h <- function(x) "hello"
 callWithTwo(f)
 callWithTwo(g)
+callWithTwo(h)
 ```
 
 ```{r, error = TRUE}
 callWithTwoNumeric(f)
-h <- function(x) "hello"
 callWithTwoNumeric(h)
 ```
 
@@ -715,7 +723,7 @@ callWithTwoNumeric(h)
 - C++ Standard Template Library
 
   The standard template library (STL) provides a set of extremely useful data structures and algorithms. 
-  However, it requires some background in C++ in order to disclose its full potential. (I will let you do your own reserach.)
+  However, it requires some background in C++ in order to disclose its full potential. (I will let you do your own research.)
 
 - armadillo and eigen library
 
