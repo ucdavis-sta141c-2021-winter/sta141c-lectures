@@ -26,6 +26,7 @@ output:
 | 01-19               | [debug](ch02-debug-profile/debug.Rmd)  | [debug]
 |                | [profile](ch02-debug-profile/profile.Rmd)  | [profile]
 | 01-25               | [Rcpp](ch03-rcpp/rcpp.Rmd)  | [Rcpp]
+| 02-02               | [R-pkgs](https://r-pkgs.org/)  | 
 
 
 [introduction]: README.md
