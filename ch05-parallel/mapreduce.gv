@@ -1,0 +1,23 @@
+digraph mapreduce {
+  rankdir=LR;
+  node [shape = rectangle]
+  data [label = 'data']
+  node1 [label = 'subsample 1']
+  node2 [label = 'subsample 2']
+  nodek [label = 'subsample k']
+  stat1 [label = 'statistic 1']
+  stat2 [label = 'statistic 2']
+  statk [label = 'statistic k']
+
+  data -> node2 [label = 'map']
+  data -> {node1, nodek}
+  node2 -> nodek [style = dotted, arrowhead = none]
+  {rank = same; node1; node2; nodek;}
+  node1 -> stat1
+  node2 -> stat2
+  nodek -> statk
+  stat2 -> statk [style = dotted, arrowhead = none]
+  {rank = same; stat1; stat2; statk;}
+  {stat1, statk} -> result
+  stat2 -> result [label = "reduce"]
+}

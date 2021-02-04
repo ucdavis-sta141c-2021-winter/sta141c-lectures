@@ -1,0 +1,61 @@
+(I have decided to skip this)
+
+## The honorable mention `multidplyr`
+
+
+The package `multidplyr` is tidyverse solution to multiprocess data management. However, it is not released to CRAN yet, it means we need to install it from its github repo by using the package `remotes`.
+
+```{r, eval = FALSE}
+remotes::install_github("tidyverse/multidplyr")
+```
+
+Since it is still under developement, use it with caution!
+
+
+```{r}
+library(tidyverse)
+library(multidplyr)
+```
+
+There are two ways to get data to the workers in cluster:
+
+- `partition()` a data frame that already loaded in the interactive process.
+- Load a different subset of the data in each worker.
+
+
+Use `partition()` to send data to workers
+```{r}
+library(nycflights13)
+
+cluster <- new_cluster(4)
+
+flights %>%
+  group_by(dest, origin) %>%
+  partition(cluster) %>%
+  summarize(air_time = mean(air_time, na.rm = TRUE))
+```
+
+
+Load data in each worker
+```{r}
+cluster <- new_cluster(4)
+
+cluster %>% cluster_library(c("tidyverse", "nycflights13"))
+
+cluster %>%
+  cluster_assign_partition(destination = unique(flights$dest))
+
+# let's check the `destimation` variable in the workers
+cluster %>%
+  cluster_call(destination)
+
+cluster %>% cluster_send({
+  df <- flights %>% filter(dest %in% destination)
+})
+
+cluster %>%
+  party_df("df") %>%
+  group_by(dest, origin) %>%
+  summarize(air_time = mean(air_time, na.rm = TRUE)) %>%
+  collect()
+```

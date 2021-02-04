@@ -1,0 +1,610 @@
+---
+title: "Parallel"
+output: 
+  html_document: 
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+opts_chunk$set(cache = TRUE)
+```
+
+```{r, message = TRUE}
+library(tidyverse)
+```
+
+# Parallel Computation
+
+
+## Implict Parallelization via linear algebra library
+
+- BLAS (Basic Linear Algebra Subroutines)
+  - CRAN R shippings with a [version](https://github.com/wch/r-source/tree/trunk/src/extra/blas) 
+    of single threaded BLAS library.
+  - [Microsoft R Open](https://mran.microsoft.com/open) ships with 
+    Intel MKL (Win/Linux) / Accelerate ML (macOS) BLAS libraries.
+  - on macOS, R could be configured to use the optimized BLAS from Apple’s Accelerate framework
+  - We could also install R with different BLAS libraries such as 
+    [openblas](https://github.com/xianyi/OpenBLAS) or [ATLAS](http://math-atlas.sourceforge.net/)
+
+
+## Embarrassingly Parallel
+
+Also called perfectly parallel, delightfully parallel or pleasingly parallel. 
+
+> An embarrassingly parallel task can be considered a trivial case - little or no manipulation is needed to separate the problem into a number of parallel tasks.
+
+A bit deroute first - revisit some of our old friends `map` and `map_*` in `purrr`.
+
+```{r}
+1:4 %>% map(function(x) x^2)
+1:4 %>% map_dbl(function(x) x^2)
+1:4 %>% map_dbl(~ .^2)
+```
+
+These are the base R equivalence.
+```{r}
+1:4 %>% lapply(function(x) x^2)
+1:4 %>% sapply(function(x) x^2)
+```
+
+
+Suppose we have a list of vectors and we want to operation some operation on each vector.
+
+```{r}
+# it is a slow operation, imagine that in real applications, it could take a few minutes
+slow_task <- function(x) {
+  sum(x %o% x)
+}
+
+list_of_vectors <- replicate(10, list(rnorm(5000)))
+list_of_vectors %>% glimpse()
+```
+
+```{r, eval = FALSE}
+list_of_vectors %>% map_dbl(slow_task)
+```
+
+However, these commands only run in a single process, it means, if the list is doubled, the time is also at least doubled.
+
+```{r}
+system.time({
+  list_of_vectors %>% map_dbl(slow_task)
+})
+
+# double the list
+longer_list_of_vectors <- c(list_of_vectors, list_of_vectors)
+system.time({
+  longer_list_of_vectors %>% map_dbl(slow_task)
+})
+```
+
+We are hoping to use multiple processes to speed up the job. The **conventional** way is to use the `parallel` package.
+
+## The package `parallel`
+
+```{r}
+library(parallel)
+```
+
+Consider again the above list_vector example,
+```{r}
+# the number of cores we have
+detectCores()
+# it will create a socket cluster on my own computer
+cl <- makeCluster(4)
+parLapply(cl, list_of_vectors, slow_task)
+# or if you want simplified result
+parSapply(cl, list_of_vectors, slow_task)
+# stop the cluster after use
+stopCluster(cl)
+```
+
+Remark: you don't have to make and stop clusters for every operation, you could make a cluster in the very beginning of your script and close it at the very end.
+
+
+Let's test the speed improvement
+
+```{r, paged.print = FALSE}
+run_each <- function(x, fun, n_cores) {
+  cl <- makeCluster(n_cores)
+  result <- parLapply(cl, x, fun)
+  stopCluster(cl)
+  result
+}
+
+bench::mark(
+  run_each(longer_list_of_vectors, slow_task, 2),
+  run_each(longer_list_of_vectors, slow_task, 4),
+  run_each(longer_list_of_vectors, slow_task, 6)
+)
+```
+PS: it is not always true that the more cpus, the faster the result.
+
+
+### Processing Chunk
+
+The tasks are divided into chunks before sending the chunks to the workers. `Sys.getpid()` tells us the process id of a worker.
+
+```{r}
+cl <- makeCluster(4)
+```
+
+```{r}
+parSapply(cl, 1:10, function(x) {
+  Sys.getpid()
+})
+parSapply(cl, 1:10, function(x) {
+    Sys.getpid()
+  },
+  chunk.size = 2
+)
+parSapply(cl, 1:10, function(x) {
+    Sys.getpid()
+  },
+  chunk.size = 1
+)
+```
+
+```{r}
+stopCluster(cl)
+```
+
+
+### Load balancing
+
+
+`parLapply` pre-schedules the tasks to each work. It could be suboptimal when different tasks require different amount of time to complete.
+
+```{r}
+cl <- makeCluster(4)
+```
+
+```{r}
+x <- c(3, 3, 1, 1, 1, 1, 1, 1, 1, 1) # length 10
+pause <- function(x) {
+  Sys.sleep(x)
+}
+
+system.time({
+  map(x, pause)  # sequentially, 14 seconds
+})
+
+system.time({
+  parLapply(cl, x, pause)  # process 1 runs task 1, 2, 3
+})
+system.time({
+  parLapply(cl, x, pause, chunk.size = 2)  # process 1 runs task 1, 2, 9, 10
+})
+system.time({
+  parLapply(cl, x, pause, chunk.size = 1)  # process 1 runs task 1, 5, 9
+})
+```
+
+Instead of preshceduling the tasks, a task could also be assigned to a free worker dynamically using `parLapplyLB`.
+
+```{r}
+system.time({
+  parLapplyLB(cl, x, pause, chunk.size = 1)
+})
+```
+Note that it only takes 4 seconds now.
+
+
+```{r}
+stopCluster(cl)
+```
+
+
+### Caution
+
+We need to make sure that objects are avaiable in the cluster
+
+```{r}
+cl <- makeCluster(4)
+```
+
+```{r}
+y <- 10
+add <- function(x) {
+  x + y
+}
+```
+
+```{r, error = TRUE}
+parSapply(cl, 1:10, add)
+```
+
+```{r}
+clusterExport(cl, "y")
+parSapply(cl, 1:10, add)
+```
+```{r}
+stopCluster(cl)
+```
+
+
+### Interact directly with the workers
+
+We just saw an quick example on using `parLapply/parSapply`. Let's try a few more things.
+
+```{r}
+cl <- makeCluster(4)
+```
+
+
+We could run some arbitrary commands on each of the workers
+```{r}
+clusterEvalQ(cl, {
+  x <- rnorm(100)
+  mean(x)
+})
+```
+
+```{r}
+clusterEvalQ(cl, {
+  Sys.getpid()
+})
+```
+
+Global variables in master are not exported to the worker automatically (the same is true for `parLapply`)
+```{r, error = TRUE}
+y <- 3
+clusterEvalQ(cl, {
+  y + 1
+})
+```
+
+`clusterExport` exports the global variables to each worker.
+```{r}
+clusterExport(cl, "y")
+clusterEvalQ(cl, {
+  y + 1
+})
+```
+
+Note: if you use `clusterExport` inside a function, you may want to specify the `envir` parameter.
+
+```{r}
+doCalc <- function() {
+  z <- 5
+  # export z from the current scope
+  clusterExport(cl, "z", envir = environment())
+  clusterEvalQ(cl, {
+    z + 1
+  })
+}
+doCalc()
+```
+
+If you want to set a random seed, the following doesn't work because each work returns the same result.
+
+
+```{r}
+# wrong
+set.seed(123)
+clusterEvalQ(cl, {
+  rnorm(5)
+})
+# wrong again
+clusterEvalQ(cl, {
+  set.seed(123)
+  rnorm(5)
+})
+```
+
+```{r}
+clusterSetRNGStream(cl, 123)
+clusterEvalQ(cl, {
+  rnorm(5)
+})
+```
+
+```{r}
+# do not forget to close the cluster
+stopCluster(cl)
+```
+
+## Fork cluster vs socket cluster
+
+In the R `parallel` package, there are two implementations of paralllization, e.g. fork and socket.
+
+For the fork, each parallel thread is a "complete" duplication of the master process with the shared environment, including objects or variables defined prior to the kickoff of parallel threads. Therefore, it runs fast. However, the major limitation is that the fork doesn’t work on the Windows system.
+(Also, it is not very stable in RStudio.)
+
+```{r, eval = FALSE}
+cl <- makeForkCluster(4)
+```
+
+
+On the other hand, the socket works on all operating systems. Each thread runs separately without sharing objects or variables, which can only be passed from the master process explicitly. As a result, it runs slower due to the communication overhead.
+
+```{r, eval = FALSE}
+cl <- makeCluster(4)
+```
+
+- thread - need RcppParallel
+- socket
+- fork (unix only)
+
+
+Ref: https://www.r-bloggers.com/parallel-r-socket-or-fork/
+
+
+
+## `mclapply` from `parallel` (unix / macOS only)
+
+Remark: `mclapply` relies on forking, it means that it doesn't work on Windows. 
+
+
+```{r}
+m <- matrix(rnorm(16), 4, 4)
+mclapply(
+  1:4,
+  function(i) sum(m[i, ])
+)
+```
+is more or less equivalent to
+```{r}
+cl <- makeForkCluster(2)
+parLapply(cl, 1:4, function(i) sum(m[i, ]))
+stopCluster(cl)
+```
+
+
+
+```{r}
+# in default, `mclapply` uses 2 cores
+system.time({
+  mclapply(
+    c(2, 2, 2, 2),
+    function(x) Sys.sleep(x)
+  )
+})
+
+system.time({
+  mclapply(
+    c(3, 3, 1, 1, 1, 1, 1, 1),
+    function(x) Sys.sleep(x),
+    mc.preschedule = FALSE, #  set FALSE to enable load balancing
+    mc.cores = 4
+  )
+})
+```
+
+
+## Package: `foreach`
+
+As we have seen a bit earlier, we might need to use `clusterExport` to export certain gloabl variables. It would be a bit cumbersome. To reduce the extra steps, we could consider `foreach` and `doParallel`. They will send all the globals to the workers before running the tasks. (However, I don't personally recommand `foreach` though it is (was!?) popular, I perfer `furrr` in the below)
+
+```{r}
+library(foreach)
+library(doParallel)
+```
+
+```{r}
+cl <- makeCluster(4)
+registerDoParallel(cl)
+m <- matrix(rnorm(16), 4, 4)
+# matrix m is sent to the workers implictly
+# in fact, all globals are sent to the workers in default
+foreach(i = seq_len(nrow(m)), .combine = c) %dopar% {
+  sum(m[i, ])
+}
+stopCluster(cl)
+```
+is almost equivalent to
+
+```{r}
+cl <- makeCluster(4)
+clusterExport(cl, ls(envir = .GlobalEnv))
+parLapply(cl, seq_len(nrow(m)), function(i) {
+  sum(m[i, ])
+})
+stopCluster(cl)
+```
+
+
+
+However, it is not quite "functional" as `mclapply`. `foreach` sends all the glbal variabels to the workers (which may be not optimal)
+
+
+## Package `furrr`
+
+`furrr` provides functions which are very similar to those in `purrr`.
+One nice thing about `furrr` is that it doesn't send absolutely all global variables to the workers as `foreach` and `mclapply`. It does lexical analysis to deduce what objects are needed and only transfer them to the workers. It also loads libraries automatically in the workers.
+
+```{r}
+library(furrr)
+```
+
+```{r}
+m <- matrix(rnorm(16), 4, 4)
+
+# purrr
+seq_len(nrow(m)) %>% 
+  map(~ sum(m[., ]))
+```
+
+
+```{r}
+# to use 4 workers, `plan(multiprocess)` will use all the avaliable workers
+suppressWarnings(plan(multiprocess, workers = 4))
+
+# furrr
+seq_len(nrow(m)) %>% 
+  future_map(~ sum(m[., ]))
+```
+
+`future_map` has a family of type speific functions. For example,
+```{r}
+seq_len(nrow(m)) %>% 
+  future_map_dbl(~ sum(m[., ]))
+```
+
+
+load balanacing in `future_map`
+
+```{r}
+# without load balanacing
+system.time({
+  future_map(
+    c(3, 3, 1, 1, 1, 1, 1, 1),
+    ~ Sys.sleep(.)
+  )
+})
+
+# with load balanacing
+system.time({
+  future_map(
+    c(3, 3, 1, 1, 1, 1, 1, 1),
+    ~ Sys.sleep(.),
+    .options = future_options(scheduling = FALSE)
+  )
+})
+```
+
+
+
+## Divide and conquer a.k.a. mapreduce
+
+Divide and conquer allows a single task operation to be executed parallelly.
+
+```{r, echo = FALSE}
+DiagrammeR::grViz("mapreduce.gv", height = 200)
+```
+
+In assignment 2 how we could use map and reduce to compute the mean. However, we didn't
+really do the calculations parallelly.
+
+
+There are two ways to get data to the workers in cluster:
+
+- Partition a data set that already loaded in the main process.
+  - It may not be possible to load the whole data set into a single process.
+- Load a different subset of the data in each worker.
+  - It is the most realistic situation and it is more memory efficient
+
+
+In order to mimic the second situation, we need some preparation.
+```{r}
+# we first random split `flights` into 10 files
+library(nycflights13)
+set.seed(141)
+m <- 10
+groups <- sample(seq_len(m), nrow(flights), replace = TRUE)
+dir.create("flights/", showWarnings = FALSE)
+for (i in seq_len(m)) {
+  write_csv(filter(flights, groups == i), str_c("flights/", i, ".csv"))
+}
+```
+
+We are going to perform the calculations via two approaches
+
+- The conventional approach by using `parLapply`
+- A newer approach by using `furrr`
+
+### The conventional approach
+
+```{r}
+file_names <- file.path("flights", list.files("flights"))
+m <- length(file_names)
+```
+
+```{r}
+cl <- makeCluster(4)
+# we will to manually load tidyverse in the workers
+invisible(clusterEvalQ(cl, {
+  library(tidyverse)
+  NULL
+}))
+```
+
+```{r}
+mean_list <- parLapply(cl, file_names, function(fname) {
+    df <- read_csv(fname, col_types = cols())
+    mean(df$dep_delay, na.rm = TRUE)
+})
+
+(mean_dep_delay <- mean_list %>% reduce(`+`) / m)
+```
+
+
+```{r}
+stopCluster(cl)
+```
+
+
+### By using `furrr`
+
+```{r}
+suppressWarnings(plan(multiprocess, workers = 4))
+```
+
+
+```{r}
+file_names <- file.path("flights", list.files("flights"))
+m <- length(file_names)
+
+mean_list <- file_names %>% future_map(~{
+  df <- read_csv(., col_types = cols())
+  mean(df$dep_delay, na.rm = TRUE)
+})
+
+(mean_dep_delay <- mean_list %>% reduce(`+`) / m)
+```
+
+### More efficient file reading by using `vroom`.
+
+See: https://vroom.r-lib.org/
+
+```{r}
+library(vroom)
+```
+
+```{r, paged.print = FALSE, message = FALSE}
+bench::mark(
+  read.csv("flights/1.csv"),
+  read_csv("flights/1.csv"),
+  vroom("flights/1.csv"),
+  read_csv("flights/1.csv", col_types = cols()),
+  vroom("flights/1.csv", col_types = cols()),
+  read_csv("flights/1.csv", col_types = cols_only(dep_delay = col_double())),
+  vroom("flights/1.csv", col_types = cols(), col_select = c(dep_delay)),
+  check = FALSE
+)
+```
+
+
+```{r}
+mean_list <- file_names %>% future_map(~{
+  df <- vroom(., col_types = cols())
+  mean(df$dep_delay, na.rm = TRUE)
+})
+
+(mean_dep_delay <- mean_list %>% reduce(`+`) / m)
+```
+
+```{r, paged.print = FALSE}
+bench::mark(
+  read_csv = {
+    mean_list <- file_names %>% future_map(~{
+      df <- read_csv(., col_types = cols())
+      mean(df$dep_delay, na.rm = TRUE)
+    })
+  },
+  vroom = {
+    mean_list <- file_names %>% future_map(~{
+      df <- vroom(., col_types = cols())
+      mean(df$dep_delay, na.rm = TRUE)
+    })
+  }
+)
+```
+
+
+
+Reference:
+
+- R Programming for Data Science https://bookdown.org/rdpeng/rprogdatascience/parallel-computation.html
