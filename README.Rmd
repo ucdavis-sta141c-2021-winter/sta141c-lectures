@@ -27,6 +27,8 @@ output:
 |                | [profile](ch02-debug-profile/profile.Rmd)  | [profile]
 | 01-25               | [Rcpp](ch03-rcpp/rcpp.Rmd)  | [Rcpp]
 | 02-02               | [R-pkgs](https://r-pkgs.org/)  | 
+| 02-04               | [parallel](ch05-parallel/parallel.Rmd)  | 
+|                    | [multidplyr](ch05-parallel/multidplyr.Rmd)  | 
 
 
 [introduction]: README.md
@@ -34,6 +36,8 @@ output:
 [debug]: https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch02-debug-profile/debug.html
 [profile]: https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch02-debug-profile/profile.html
 [Rcpp]: https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch03-rcpp/rcpp.html
+[parallel]: https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch05-parallel/parallel.html
+[parallel]: https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch05-parallel/multidplyr.html
 
 
 ## Links
