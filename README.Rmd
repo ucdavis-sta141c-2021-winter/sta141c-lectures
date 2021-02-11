@@ -19,18 +19,18 @@ output:
 
 ## Material
 
-| Date                | Note                                            | HTML
-| ----                | ----                                            | ----
-| 01-05               | Introduction                                    | [introduction]
-| 01-07               | [functional programming](ch01-purrr/purrr.Rmd)  | [purrr]
-| 01-19               | [debug](ch02-debug-profile/debug.Rmd)  | [debug]
-|                | [profile](ch02-debug-profile/profile.Rmd)  | [profile]
-| 01-25               | [Rcpp](ch03-rcpp/rcpp.Rmd)  | [Rcpp]
-| 02-02               | [R-pkgs](https://r-pkgs.org/)  | 
-| 02-04               | [parallel](ch05-parallel/parallel.Rmd)  | 
-|                    | ~~[multidplyr](ch05-parallel/multidplyr.Rmd)~~  | 
-| 02-10               | [bootstrap](ch06-bootstrap/bootstrap.Rmd)  | 
-|                   | [blb](ch06-bootstrap/blb.Rmd)  | 
+| Date  | Note                                           | HTML
+| ----  | ----                                           | ----
+| 01-05 | Introduction                                   | [introduction]
+| 01-07 | [functional programming](ch01-purrr/purrr.Rmd) | [purrr]
+| 01-19 | [debug](ch02-debug-profile/debug.Rmd)          | [debug]
+|       | [profile](ch02-debug-profile/profile.Rmd)      | [profile]
+| 01-25 | [Rcpp](ch03-rcpp/rcpp.Rmd)                     | [Rcpp]
+| 02-02 | [R-pkgs](https://r-pkgs.org/)                  |
+| 02-04 | [parallel](ch05-parallel/parallel.Rmd)         | [parallel]
+|       | ~~[multidplyr](ch05-parallel/multidplyr.Rmd)~~ | [multidplyr]
+| 02-10 | [bootstrap](ch06-bootstrap/bootstrap.Rmd)      | [bootstrap]
+|       | [blb](ch06-bootstrap/blb.Rmd)                  | [blb]
 
 
 [introduction]: README.md
