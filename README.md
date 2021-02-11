@@ -30,18 +30,18 @@
 
 ## Material
 
-| Date  | Note                                           | HTML                                                                                                      |
-| ----- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| 01-05 | Introduction                                   | [introduction](README.md)                                                                                 |
-| 01-07 | [functional programming](ch01-purrr/purrr.Rmd) | [purrr](https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch01-purrr/purrr.html)             |
-| 01-19 | [debug](ch02-debug-profile/debug.Rmd)          | [debug](https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch02-debug-profile/debug.html)     |
-|       | [profile](ch02-debug-profile/profile.Rmd)      | [profile](https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch02-debug-profile/profile.html) |
-| 01-25 | [Rcpp](ch03-rcpp/rcpp.Rmd)                     | [Rcpp](https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch03-rcpp/rcpp.html)                |
-| 02-02 | [R-pkgs](https://r-pkgs.org/)                  |                                                                                                           |
-| 02-04 | [parallel](ch05-parallel/parallel.Rmd)         | [parallel](https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch05-parallel/multidplyr.html)  |
-|       | ~~[multidplyr](ch05-parallel/multidplyr.Rmd)~~ | \[multidplyr\]                                                                                            |
-| 02-10 | [bootstrap](ch06-bootstrap/bootstrap.Rmd)      | [bootstrap](https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch06-bootstrap/bootstrap.html) |
-|       | [blb](ch06-bootstrap/blb.Rmd)                  | [blb](https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch06-bootstrap/blb.html)             |
+| Date  | Note                                           | HTML                                                                                                       |
+| ----- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| 01-05 | Introduction                                   | [introduction](README.md)                                                                                  |
+| 01-07 | [functional programming](ch01-purrr/purrr.Rmd) | [purrr](https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch01-purrr/purrr.html)              |
+| 01-19 | [debug](ch02-debug-profile/debug.Rmd)          | [debug](https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch02-debug-profile/debug.html)      |
+|       | [profile](ch02-debug-profile/profile.Rmd)      | [profile](https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch02-debug-profile/profile.html)  |
+| 01-25 | [Rcpp](ch03-rcpp/rcpp.Rmd)                     | [Rcpp](https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch03-rcpp/rcpp.html)                 |
+| 02-02 | [R-pkgs](https://r-pkgs.org/)                  |                                                                                                            |
+| 02-04 | [parallel](ch05-parallel/parallel.Rmd)         | [parallel](https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch05-parallel/parallel.html)     |
+|       | ~~[multidplyr](ch05-parallel/multidplyr.Rmd)~~ | [multidplyr](https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch05-parallel/multidplyr.html) |
+| 02-10 | [bootstrap](ch06-bootstrap/bootstrap.Rmd)      | [bootstrap](https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch06-bootstrap/bootstrap.html)  |
+|       | [blb](ch06-bootstrap/blb.Rmd)                  | [blb](https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch06-bootstrap/blb.html)              |
 
 ## Links
 
