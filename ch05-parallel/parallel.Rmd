@@ -20,11 +20,11 @@ library(tidyverse)
 ## Implict Parallelization via linear algebra library
 
 - BLAS (Basic Linear Algebra Subroutines)
-  - CRAN R shippings with a [version](https://github.com/wch/r-source/tree/trunk/src/extra/blas) 
+  - CRAN R ships with a [version](https://github.com/wch/r-source/tree/trunk/src/extra/blas) 
     of single threaded BLAS library.
   - [Microsoft R Open](https://mran.microsoft.com/open) ships with 
     Intel MKL (Win/Linux) / Accelerate ML (macOS) BLAS libraries.
-  - on macOS, R could be configured to use the optimized BLAS from Apple’s Accelerate framework
+  - on macOS, R could be configured to use the optimized BLAS from Apple's Accelerate framework
   - We could also install R with different BLAS libraries such as 
     [openblas](https://github.com/xianyi/OpenBLAS) or [ATLAS](http://math-atlas.sourceforge.net/)
 
@@ -61,6 +61,7 @@ slow_task <- function(x) {
 list_of_vectors <- replicate(10, list(rnorm(5000)))
 list_of_vectors %>% glimpse()
 ```
+
 
 ```{r, eval = FALSE}
 list_of_vectors %>% map_dbl(slow_task)
@@ -115,9 +116,10 @@ run_each <- function(x, fun, n_cores) {
 }
 
 bench::mark(
+  longer_list_of_vectors %>% map(slow_task),
   run_each(longer_list_of_vectors, slow_task, 2),
   run_each(longer_list_of_vectors, slow_task, 4),
-  run_each(longer_list_of_vectors, slow_task, 6)
+  run_each(longer_list_of_vectors, slow_task, 8)
 )
 ```
 PS: it is not always true that the more cpus, the faster the result.
@@ -182,7 +184,7 @@ system.time({
 })
 ```
 
-Instead of preshceduling the tasks, a task could also be assigned to a free worker dynamically using `parLapplyLB`.
+Instead of preshceduling the tasks, a task could only be assigned to a free worker dynamically using `parLapplyLB`.
 
 ```{r}
 system.time({
@@ -199,7 +201,7 @@ stopCluster(cl)
 
 ### Caution
 
-We need to make sure that objects are avaiable in the cluster
+We need to make sure that objects are available in the cluster
 
 ```{r}
 cl <- makeCluster(4)
@@ -212,6 +214,10 @@ add <- function(x) {
 }
 ```
 
+```{r}
+sapply(1:10, add)
+```
+
 ```{r, error = TRUE}
 parSapply(cl, 1:10, add)
 ```
@@ -220,6 +226,7 @@ parSapply(cl, 1:10, add)
 clusterExport(cl, "y")
 parSapply(cl, 1:10, add)
 ```
+
 ```{r}
 stopCluster(cl)
 ```
@@ -248,36 +255,6 @@ clusterEvalQ(cl, {
 })
 ```
 
-Global variables in master are not exported to the worker automatically (the same is true for `parLapply`)
-```{r, error = TRUE}
-y <- 3
-clusterEvalQ(cl, {
-  y + 1
-})
-```
-
-`clusterExport` exports the global variables to each worker.
-```{r}
-clusterExport(cl, "y")
-clusterEvalQ(cl, {
-  y + 1
-})
-```
-
-Note: if you use `clusterExport` inside a function, you may want to specify the `envir` parameter.
-
-```{r}
-doCalc <- function() {
-  z <- 5
-  # export z from the current scope
-  clusterExport(cl, "z", envir = environment())
-  clusterEvalQ(cl, {
-    z + 1
-  })
-}
-doCalc()
-```
-
 If you want to set a random seed, the following doesn't work because each work returns the same result.
 
 
@@ -295,7 +272,7 @@ clusterEvalQ(cl, {
 ```
 
 ```{r}
-clusterSetRNGStream(cl, 123)
+clusterSetRNGStream(cl, 1234)
 clusterEvalQ(cl, {
   rnorm(5)
 })
@@ -308,46 +285,61 @@ stopCluster(cl)
 
 ## Fork cluster vs socket cluster
 
-In the R `parallel` package, there are two implementations of paralllization, e.g. fork and socket.
+In the R `parallel` package, there are two common implementations of paralllization via `makeCluster`, e.g. fork and socket (default in RStudio).
 
-For the fork, each parallel thread is a "complete" duplication of the master process with the shared environment, including objects or variables defined prior to the kickoff of parallel threads. Therefore, it runs fast. However, the major limitation is that the fork doesn’t work on the Windows system.
+
+For the fork, each parallel thread is a "complete" duplication of the master process with the shared environment, including objects or variables defined prior to the kickoff of parallel processes. Therefore, it runs fast. However, the major limitation is that the fork doesn’t work on the Windows system.
 (Also, it is not very stable in RStudio.)
 
 ```{r, eval = FALSE}
+y <- 2
 cl <- makeForkCluster(4)
+clusterEvalQ(cl, {
+  y
+})
+stopCluster(cl)
 ```
 
-
-On the other hand, the socket works on all operating systems. Each thread runs separately without sharing objects or variables, which can only be passed from the master process explicitly. As a result, it runs slower due to the communication overhead.
+On the other hand, the socket works on all operating systems. Each process runs separately without sharing objects or variables, which can only be passed from the master process explicitly. As a result, it runs slower due to the communication overhead.
 
 ```{r, eval = FALSE}
-cl <- makeCluster(4)
+y <- 2
+cl <- makePSOCKcluster(4)
+clusterEvalQ(cl, {
+  y
+})
+stopCluster(cl)
 ```
 
-- thread - need RcppParallel
-- socket
-- fork (unix only)
+- thread: need RcppParallel
+  thread vs fork vs process
+  In python, `threading` in python uses threads to do parallels tasks.
+
+- coroutine (asynchronous programming):
+  Different to parallelization.
+  In R: library `coro`
+  In python: `asyncio`
 
 
 Ref: https://www.r-bloggers.com/parallel-r-socket-or-fork/
 
 
-
 ## `mclapply` from `parallel` (unix / macOS only)
 
-Remark: `mclapply` relies on forking, it means that it doesn't work on Windows. 
-
+`mclapply` relies on forking, it means that it doesn't work on Windows. As it uses forking,
+we don't have to export global variables.
 
 ```{r}
 m <- matrix(rnorm(16), 4, 4)
 mclapply(
   1:4,
-  function(i) sum(m[i, ])
+  function(i) sum(m[i, ]),
+  mc.cores = 4
 )
 ```
 is more or less equivalent to
 ```{r}
-cl <- makeForkCluster(2)
+cl <- makeForkCluster(4)
 parLapply(cl, 1:4, function(i) sum(m[i, ]))
 stopCluster(cl)
 ```
@@ -358,8 +350,9 @@ stopCluster(cl)
 # in default, `mclapply` uses 2 cores
 system.time({
   mclapply(
-    c(2, 2, 2, 2),
-    function(x) Sys.sleep(x)
+    c(3, 3, 1, 1, 1, 1, 1, 1),
+    function(x) Sys.sleep(x),
+    mc.cores = 4
   )
 })
 
@@ -376,7 +369,7 @@ system.time({
 
 ## Package: `foreach`
 
-As we have seen a bit earlier, we might need to use `clusterExport` to export certain gloabl variables. It would be a bit cumbersome. To reduce the extra steps, we could consider `foreach` and `doParallel`. They will send all the globals to the workers before running the tasks. (However, I don't personally recommand `foreach` though it is (was!?) popular, I perfer `furrr` in the below)
+As we have seen a bit earlier, we might need to use `clusterExport` to export certain global variables in a socket cluster. It would be a bit cumbersome. To reduce the extra steps, we could consider `foreach` and `doParallel`. They will send all the globals to the workers before running the tasks. (However, I don't personally recommend `foreach` though it is (was!?) popular, I prefer `furrr` in the below)
 
 ```{r}
 library(foreach)
@@ -386,9 +379,10 @@ library(doParallel)
 ```{r}
 cl <- makeCluster(4)
 registerDoParallel(cl)
+
 m <- matrix(rnorm(16), 4, 4)
-# matrix m is sent to the workers implictly
-# in fact, all globals are sent to the workers in default
+# matrix m is sent to the workers implicitly
+# in fact, all variables in the current (global) environment are sent to the workers in default
 foreach(i = seq_len(nrow(m)), .combine = c) %dopar% {
   sum(m[i, ])
 }
@@ -398,26 +392,24 @@ is almost equivalent to
 
 ```{r}
 cl <- makeCluster(4)
-clusterExport(cl, ls(envir = .GlobalEnv))
-parLapply(cl, seq_len(nrow(m)), function(i) {
+clusterExport(cl, ls(envir = environment()))
+parSapply(cl, seq_len(nrow(m)), function(i) {
   sum(m[i, ])
 })
+invisible(clusterEvalQ(cl, {
+  rm(m)
+}))
 stopCluster(cl)
 ```
 
 
-
-However, it is not quite "functional" as `mclapply`. `foreach` sends all the glbal variabels to the workers (which may be not optimal)
-
+However, it is not quite "functional" as `mclapply`. `foreach` sends all the global variabels to the workers (which may be not optimal)
 
 ## Package `furrr`
 
 `furrr` provides functions which are very similar to those in `purrr`.
 One nice thing about `furrr` is that it doesn't send absolutely all global variables to the workers as `foreach` and `mclapply`. It does lexical analysis to deduce what objects are needed and only transfer them to the workers. It also loads libraries automatically in the workers.
 
-```{r}
-library(furrr)
-```
 
 ```{r}
 m <- matrix(rnorm(16), 4, 4)
@@ -429,22 +421,28 @@ seq_len(nrow(m)) %>%
 
 
 ```{r}
-# to use 4 workers, `plan(multiprocess)` will use all the avaliable workers
-suppressWarnings(plan(multiprocess, workers = 4))
+library(furrr)
+```
 
+```{r, message = FALSE, warning = FALSE}
+# to use 4 workers, `plan(multiprocess)` will use all the available workers
+plan(multiprocess, workers = 4)
+```
+
+```{r}
 # furrr
 seq_len(nrow(m)) %>% 
   future_map(~ sum(m[., ]))
 ```
 
-`future_map` has a family of type speific functions. For example,
+`future_map` has a family of type specific functions. For example,
 ```{r}
 seq_len(nrow(m)) %>% 
   future_map_dbl(~ sum(m[., ]))
 ```
 
 
-load balanacing in `future_map`
+load balancing in `future_map`
 
 ```{r}
 # without load balanacing
@@ -455,7 +453,7 @@ system.time({
   )
 })
 
-# with load balanacing
+# with load balancing
 system.time({
   future_map(
     c(3, 3, 1, 1, 1, 1, 1, 1),
@@ -476,13 +474,13 @@ DiagrammeR::grViz("mapreduce.gv", height = 200)
 ```
 
 In assignment 2 how we could use map and reduce to compute the mean. However, we didn't
-really do the calculations parallelly.
+really do the calculations parallelly. We are going to use the `furrr` library.
 
 
 There are two ways to get data to the workers in cluster:
 
 - Partition a data set that already loaded in the main process.
-  - It may not be possible to load the whole data set into a single process.
+  - It may not be possible to load the whole data set into a main process.
 - Load a different subset of the data in each worker.
   - It is the most realistic situation and it is more memory efficient
 
@@ -513,6 +511,7 @@ m <- length(file_names)
 ```
 
 ```{r}
+library(parallel)
 cl <- makeCluster(4)
 # we will to manually load tidyverse in the workers
 invisible(clusterEvalQ(cl, {
@@ -539,7 +538,9 @@ stopCluster(cl)
 ### By using `furrr`
 
 ```{r}
+library(furrr)
 suppressWarnings(plan(multiprocess, workers = 4))
+options(future.rng.onMisuse = "ignore")
 ```
 
 
