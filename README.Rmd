@@ -39,7 +39,7 @@ output:
 [profile]: https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch02-debug-profile/profile.html
 [Rcpp]: https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch03-rcpp/rcpp.html
 [parallel]: https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch05-parallel/parallel.html
-[parallel]: https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch05-parallel/multidplyr.html
+[multidplyr]: https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch05-parallel/multidplyr.html
 [bootstrap]: https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch06-bootstrap/bootstrap.html
 [blb]: https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch06-bootstrap/blb.html
 
