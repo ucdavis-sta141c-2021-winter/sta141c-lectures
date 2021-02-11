@@ -3,6 +3,9 @@ title: "Bootstrap"
 output: 
   html_document: 
     toc: yes
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
 
 ```{r}
@@ -11,27 +14,90 @@ library(tidyverse)
 
 # The Bootstrap
 
-- The bootstrap is a flexible and powerful statistical tool that can be used to quantify the uncertainty associated with a given estimator or statistical learning method.
-- It can provide an estimate of the standard error of a coefficient, or a confidence interval for that coefficient.
+-   The bootstrap is a flexible and powerful statistical tool that can
+    be used to quantify the uncertainty associated with a given
+    estimator or statistical learning method.
+-   It can provide an estimate of the standard error of a coefficient,
+    or a confidence interval for that coefficient.
 
 ## In the ideal world
- 
-- For example, we have an estimator $\hat \alpha$ of $\alpha$ and we are interested in its s.d. (to construct confidence interval)
-  - $\hat \alpha$ is a function of the observations $(x_i,y_i)$, $i=1,\ldots,n$
-  - To estimate the standard deviation of $\hat \alpha$, we could simulate
-      observations $(\tilde x_i, \tilde y_i)$, $i=1,\ldots,n$ which have the same distribution as $(x_i,y_i)$.
-  - A new estimate of $\alpha$ is obtained, called it $\tilde \alpha$
-  - repeat the process 1000 times, we have 1000 $\tilde \alpha$'s and the sample deviations of
-    those 1000 $\tilde \alpha$'s can be used to estimate the s.d. of $\hat \alpha$.
-    
--  The procedure outlined above cannot be applied, because for real data we cannot generate new samples from the original population.
-    
+
+-   For example, we have an estimator $\hat \alpha$ of $\alpha$ and we
+    are interested in its s.d. (standard error) (to construct confidence
+    interval)
+
+    $$
+    \hat \alpha \pm 1.96 (\text{se}_{\hat \alpha})
+    $$
+
+    -   $\hat \alpha$ is a function of the observations $(x_i,y_i)$,
+        $i=1,\ldots,n$
+
+    -   To estimate the standard deviation of $\hat \alpha$, we could
+        simulate observations $(\tilde x_i, \tilde y_i)$, $i=1,\ldots,n$
+        which have the same distribution as $(x_i,y_i)$.
+
+        -   A new estimate of $\alpha$ is obtained, called it
+            $\tilde \alpha$
+
+    -   repeat the process 1000 times, we have 1000 $\tilde \alpha$'s
+        and the standard deviation of those 1000 $\tilde \alpha$'s can
+        be used to estimate the standard error of $\hat \alpha$.
+
+```{r}
+n <- 100
+x <- rnorm(n)
+e <- rnorm(n, sd = 0.5)
+alpha <- 3
+y <- 2 + alpha * x + e
+slope <- function(x, y) {
+  stopifnot(length(x) == length(y))
+  n <- length(x)
+  mux <- mean(x)
+  muy <- mean(y)
+  sxy <- sum(x*y) - n * mux * muy
+  sxx <- sum(x^2) - n * mux^2  
+  sxy/sxx
+}
+(alphahat <- slope(x, y))
+
+```
+
+In the ideal world, assume that we know how to simulate $x$ and $y$.
+
+```{r}
+se <- rerun(1000, {
+    n <- 100
+    x <- rnorm(n)
+    e <- rnorm(n, sd = 0.5)
+    alpha <- 3
+    y <- 2 + alpha * x + e
+    slope(x, y)
+  }) %>% 
+  flatten_dbl() %>% 
+  sd
+
+# a 95% confidence interval
+alphahat + c(-1, 1) * 1.96 * se
+```
+where `qnorm(0.975)` is roughly 1.96.
+
+
+-   The procedure outlined above cannot be applied, because for real
+    data we cannot generate new samples from the original population.
+
 ## Now back to the real world
 
-- However, the bootstrap approach allows us to use a computer to mimic the process of obtaining new data sets, so that we can estimate the variability of our estimate without generating additional samples.
-- Rather than repeatedly obtaining independent data sets from the population, we instead
-        obtain distinct data sets by repeatedly sampling observations from the original data set *with replacement*.
-- Each of these 'bootstrap data sets' is created by sampling with replacement, and is the same size as our original dataset. As a result some observations may appear more than once in a given bootstrap data set and some not at all.
+-   However, the bootstrap approach allows us to use a computer to mimic
+    the process of obtaining new data sets, so that we can estimate the
+    variability of our estimate without generating additional samples.
+-   Rather than repeatedly obtaining independent data sets from the
+    population, we instead obtain distinct data sets by repeatedly
+    sampling observations from the original data set *with replacement*.
+-   Each of these 'bootstrap data sets' is created by sampling with
+    replacement, and is the same size as our original dataset. As a
+    result some observations may appear more than once in a given
+    bootstrap data set and some not at all.
 
 ## Example with just 3 observations
 
@@ -41,26 +107,44 @@ knitr::include_graphics("boot3.png")
 
 ## Notations
 
-- Denoting the first bootstrap data set by $Z^{*1}$, we use $Z^{*1}$ to
-produce a new bootstrap estimate for $\alpha$, which we call $\hat \alpha^{*1}$
-- this procedure is repeated $B$ times for some large value of $B$ (say 5000 or 10000)
-- we have $B$ different bootstrap data sets, $Z^{*1},\ldots,Z^{*B}$, and $B$
-       corresponding $\alpha$ estimates, $\hat \alpha^{*1},\ldots,\hat \alpha^{*B}$
-- We estimate the standard error of these bootstrap estimates using the formula
-$$
- SE_{B}(\hat \alpha) = \sqrt{\frac{1}{B-1}\sum_{r=1}^{B} (\hat \alpha^{*r} - \bar{\hat
- \alpha}^*)^2}
-$$
-where $\bar{\hat \alpha}^*$ is the average of $\hat \alpha^{*r}$'s.
+-   Denoting the first bootstrap data set by $Z^{*1}$, we use $Z^{*1}$
+    to produce a new bootstrap estimate for $\alpha$, which we call
+    $\hat \alpha^{*1}$
 
-- This serves as an estimate of the standard error of $\hat \alpha$ estimated from the original data set.
+-   this procedure is repeated $B$ times for some large value of $B$
+    (say 5000 or 10000)
 
-       
+-   we have $B$ different bootstrap data sets, $Z^{*1},\ldots,Z^{*B}$,
+    and $B$ corresponding $\alpha$ estimates,
+    $\hat \alpha^{*1},\ldots,\hat \alpha^{*B}$
+
+-   We estimate the standard error of these bootstrap estimates using
+    the formula $$
+     SE_{B}(\hat \alpha) = \sqrt{\frac{1}{B-1}\sum_{r=1}^{B} (\hat \alpha^{*r} - \bar{\hat
+     \alpha}^*)^2}
+    $$ where $\bar{\hat \alpha}^*$ is the average of
+    $\hat \alpha^{*r}$'s.
+
+-   This serves as an estimate of the standard error of $\hat \alpha$
+    estimated from the original data set.
+
+```{r}
+se <- rerun(5000, {
+    n <- 100
+    index <- sample.int(n, replace = TRUE)
+    slope(x[index], y[index])
+  }) %>% 
+  flatten_dbl() %>% 
+  sd
+
+alphahat + c(-1, 1) * 1.96 * se
+```
+
 ## A general picture for the bootstrap
+
 ```{r echo=FALSE, out.width='100%'}
 knitr::include_graphics("bootstrap_world.png")
 ```
-
 
 ## A example
 
@@ -74,21 +158,22 @@ To get the "classical" confidence interval (by Fisher's transformation)
 
 ```{r}
 with(mtcars, cor.test(mpg, hp))
+# cor.test(mtcars$mpg, mtcars$hp)
 ```
 
 Use bootstrap to obtain a confidence interval
 
-# Classical boostrap confidence interval
+# Classical bootstrap confidence interval
 
+## Using `rsample`
 Bootstrap is used to obtain standard errors of an estimate.
-
 
 ```{r}
 library(rsample)
-boots <- bootstraps(mtcars, times = 10000)
 ```
 
 ```{r}
+boots <- bootstraps(mtcars, times = 10000)
 se <- boots %>%
   pull(splits) %>%
   map_dbl(
@@ -99,49 +184,50 @@ se <- boots %>%
   ) %>%
   sd()
 
-with(mtcars, cor(mpg, hp)) + 1.96 * c(-1, 1) * se
+cor(mtcars$mpg, mtcars$hp) + 1.96 * c(-1, 1) * se
 ```
 
-where `qnorm(0.975)` is roughly 1.96.
-
+## Using `purrr`
 
 If you want to do it manually
 
 ```{r}
+n <- nrow(mtcars)
 se <- map_dbl(seq_len(10000), ~{
-    n <- nrow(mtcars)
+      index <- sample.int(n, n, replace = TRUE)
+      x <- mtcars$mpg[index]
+      y <- mtcars$hp[index]
+      cor(x, y)
+  }) %>% sd()
+
+cor(mtcars$mpg, mtcars$hp) + 1.96 * c(-1, 1) * se
+```
+
+### Bootstrap Percentile confidence interval
+
+-   Consider the 2.5th and 97.5th percentile of
+    $\hat \alpha^{*1},\ldots,\hat \alpha^{*B}$
+-   The above interval is called a 95% Bootstrap Percentile confidence
+    interval.
+-   It usually gives better results for heavily skewed distributions of
+    statistics.
+
+```{r}
+n <- nrow(mtcars)
+map_dbl(seq_len(10000), ~{
     index <- sample.int(n, n, replace = TRUE)
     x <- mtcars$mpg[index]
     y <- mtcars$hp[index]
     cor(x, y)
-}) %>% sd()
-
-with(mtcars, cor(mpg, hp)) + 1.96 * c(-1, 1) * se
-```
-
-
-### Bootstrap Percentile confidence interval
-
-- Consider the 2.5th and 97.5th percentile of $\hat \alpha^{*1},\ldots,\hat \alpha^{*B}$
-- The above interval is called a 95% Bootstrap Percentile confidence interval.
-- It usually gives better results for heavily skewed distributions of statistics.
-
-```{r}
-boots %>%
-  pull(splits) %>%
-  map_dbl(
-    ~ {
-      train_data <- analysis(.)
-      with(train_data, cor(mpg, hp))
-    }
-  ) %>%
+  }) %>% 
   quantile(p = c(0.025, 0.975))
 ```
 
-
 ## Using `parallel` to do bootstrap (the conventional approach)
 
-First thing first, we don't want to use `bootstraps()` function for parallel processing because it will make deep copy of the bootstrap datasets. We will do a more primitive resampling using `sample.int`.
+First thing first, we don't want to use `bootstraps()` function for
+parallel processing because it will make deep copy of the bootstrap
+datasets. We will do a more primitive resampling using `sample.int`.
 
 ```{r}
 library(parallel)
@@ -159,6 +245,9 @@ rs <- parSapply(cl, seq_len(B), function(i) {
   cor(x, y)
 })
 
+# classical bootstrap
+cor(mtcars$mpg, mtcars$hp) + 1.96 * c(-1, 1) * sd(rs)
+# bootstrap percentile
 rs %>% quantile(c(0.025, 0.975))
 ```
 
@@ -166,28 +255,32 @@ rs %>% quantile(c(0.025, 0.975))
 stopCluster(cl)  # stop the cluster finally
 ```
 
-
 ## Using `furrr` to do bootstrap (my recommendation over parSapply/parLapply)
 
 ```{r}
 library(furrr)
 suppressWarnings(plan(multiprocess, workers = 4))
+options(future.rng.onMisuse = "ignore")
 ```
 
 ```{r}
 B <- 10000
-seq_len(B) %>% future_map_dbl(function(i) {
+rs <- future_map_dbl(seq_len(B), ~{
     n <- nrow(mtcars)
     index <- sample.int(n, n, replace = TRUE)
     x <- mtcars$mpg[index]
     y <- mtcars$hp[index]
     cor(x, y)
-}) %>%
-  quantile(c(0.025, 0.975))
-```
+  })
 
+# classical bootstrap
+cor(mtcars$mpg, mtcars$hp) + 1.96 * c(-1, 1) * sd(rs)
+# bootstrap percentile
+rs %>% quantile(c(0.025, 0.975))
+```
 
 # Reference
 
-- rsample: https://tidymodels.github.io/rsample/
-- Chapter 5 of An Introduction to Statistical Learning http://faculty.marshall.usc.edu/gareth-james/ISL/
+-   rsample: <https://tidymodels.github.io/rsample/>
+-   Chapter 5 of An Introduction to Statistical Learning
+    <http://faculty.marshall.usc.edu/gareth-james/ISL/>
