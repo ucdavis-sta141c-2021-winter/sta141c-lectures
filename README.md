@@ -40,6 +40,8 @@
 | 02-02 | [R-pkgs](https://r-pkgs.org/)                  |                                                                                                           |
 | 02-04 | [parallel](ch05-parallel/parallel.Rmd)         |                                                                                                           |
 |       | [multidplyr](ch05-parallel/multidplyr.Rmd)     |                                                                                                           |
+| 02-10 | [bootstrap](ch06-bootstrap/bootstrap.Rmd)      |                                                                                                           |
+|       | [blb](ch06-bootstrap/blb.Rmd)                  |                                                                                                           |
 
 ## Links
 
