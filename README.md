@@ -38,10 +38,10 @@
 |       | [profile](ch02-debug-profile/profile.Rmd)      | [profile](https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch02-debug-profile/profile.html) |
 | 01-25 | [Rcpp](ch03-rcpp/rcpp.Rmd)                     | [Rcpp](https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch03-rcpp/rcpp.html)                |
 | 02-02 | [R-pkgs](https://r-pkgs.org/)                  |                                                                                                           |
-| 02-04 | [parallel](ch05-parallel/parallel.Rmd)         |                                                                                                           |
-|       | ~~[multidplyr](ch05-parallel/multidplyr.Rmd)~~ |                                                                                                           |
-| 02-10 | [bootstrap](ch06-bootstrap/bootstrap.Rmd)      |                                                                                                           |
-|       | [blb](ch06-bootstrap/blb.Rmd)                  |                                                                                                           |
+| 02-04 | [parallel](ch05-parallel/parallel.Rmd)         | [parallel](https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch05-parallel/multidplyr.html)  |
+|       | ~~[multidplyr](ch05-parallel/multidplyr.Rmd)~~ | \[multidplyr\]                                                                                            |
+| 02-10 | [bootstrap](ch06-bootstrap/bootstrap.Rmd)      | [bootstrap](https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch06-bootstrap/bootstrap.html) |
+|       | [blb](ch06-bootstrap/blb.Rmd)                  | [blb](https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch06-bootstrap/blb.html)             |
 
 ## Links
 
