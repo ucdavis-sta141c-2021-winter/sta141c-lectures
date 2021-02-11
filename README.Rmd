@@ -29,6 +29,8 @@ output:
 | 02-02               | [R-pkgs](https://r-pkgs.org/)  | 
 | 02-04               | [parallel](ch05-parallel/parallel.Rmd)  | 
 |                    | [multidplyr](ch05-parallel/multidplyr.Rmd)  | 
+| 02-10               | [bootstrap](ch06-bootstrap/bootstrap.Rmd)  | 
+|                   | [blb](ch06-bootstrap/blb.Rmd)  | 
 
 
 [introduction]: README.md
@@ -38,6 +40,8 @@ output:
 [Rcpp]: https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch03-rcpp/rcpp.html
 [parallel]: https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch05-parallel/parallel.html
 [parallel]: https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch05-parallel/multidplyr.html
+[bootstrap]: https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch06-bootstrap/bootstrap.html
+[blb]: https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch06-bootstrap/blb.html
 
 
 ## Links

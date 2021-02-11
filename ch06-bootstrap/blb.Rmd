@@ -1,0 +1,261 @@
+---
+title: "Bag of little Bootstraps"
+output: 
+  html_document: 
+    toc: yes
+---
+
+
+```{r}
+library(tidyverse)
+```
+
+# Divide and conquer a.k.a. mapreduce does not always work
+
+Divide and conquer allows a single task operation to be executed parallelly, but it does not always work.
+
+```{r, echo = FALSE}
+DiagrammeR::grViz("mapreduce.gv", height = 200)
+```
+
+Recall that there are two ways to get data to the workers in cluster:
+
+- Partition a data set that already loaded in the main process.
+- Load a different subset of the data in each worker.
+
+The second appoarch is more efficient, so we first random split `flights` into 10 files.
+In practice, the subsets are more likely to be loaded from a database server directly.
+
+```{r}
+library(nycflights13)
+set.seed(141)
+m <- 10
+groups <- sample(seq_len(m), nrow(flights), replace = TRUE)
+dir.create("flights/", showWarnings = FALSE)
+for (i in seq_len(m)) {
+  write_csv(filter(flights, groups == i), str_c("flights/", i, ".csv"))
+}
+```
+
+As what we have done in Chapter 6. The mean could be computed by "mapreduce" with
+
+```{r, message = FALSE}
+file_names <- file.path("flights", list.files("flights"))
+cor_list <- file_names %>%
+  map_dbl(~ {
+    df <- read_csv(., col_types = cols())
+    cor(df$dep_delay, df$arr_delay, use = "pairwise.complete.obs")
+  })
+(mean_cor <- cor_list %>% reduce(`+`) / m)
+```
+
+```{r}
+cor(flights$dep_delay, flights$arr_delay, use = "pairwise.complete.obs")
+```
+
+
+You may wonder if you could do the same for confidence intervals.
+```{r, message = FALSE}
+ci_list <- file_names %>%
+  map(~ {
+    df <- read_csv(., col_types = cols())
+    cor.test(df$dep_delay, df$arr_delay)$conf.int
+  })
+(mean_ci <- ci_list %>% reduce(`+`) / m)
+```
+Yeah, it gives us a result. But wait, it doesn't look right. Though the mapreduce procedure speeds up the computation, it should give similar result as if we work on the whole dataset.
+
+```{r}
+cor.test(flights$dep_delay, flights$arr_delay)$conf.int
+```
+
+
+*Lesson learned*: we cannot combine any statistics in the reduce step by simply taking the average. We may need to scale the statistics analytically which could be hard or impossible.
+
+
+# The bag of little bootstraps (BLB)
+
+It is a procedure which incorporates features of both the bootstrap and subsampling to yield a robust, computationally efficient means of assessing the quality of estimators
+
+
+```{r, echo = FALSE}
+DiagrammeR::grViz("blb.gv", height = 300)
+```
+
+
+Bascially, the bag of little bootstraps = subsample + bootstrap. However, for each bootstrap, we sample $n$ from $b$ with replacement instead of sample $b$ from $b$ as in oridinary bootstrap.
+
+- sample without replacement the sample $s$ times into sizes of $b$
+- for each subsample
+  - resample each until sample size is $n$, $r$ times
+  - compute the bootstrap statistic (e,g., the mean of a variable, or cor between two variables) for each bootstrap sample
+  - compute the statistic (e.g., confidence interval) from the bootstrap statistics
+- take the average of the statistics
+
+
+## A naive (single core) implementation
+
+```{r, message = FALSE}
+r <- 10 # r should be at least a few thousands, say 10000, we are using 10 for demo
+n <- nrow(flights)
+
+ci_list <- file_names %>% map(~ {
+  df <- read_csv(., col_types = cols()) %>%
+    select(dep_delay, arr_delay)
+  seq_len(r) %>%
+    map_dbl(~ {
+      df <- df[sample(seq_len(nrow(df)), n, replace = TRUE), ]
+      cor(df$dep_delay, df$arr_delay, use = "pairwise.complete.obs")
+    }) %>%
+    quantile(c(0.025, 0.975))
+})
+
+reduce(ci_list, `+`) / length(ci_list)
+```
+
+The result is much closer to the result from the `cor.test` based on the whole data. (even `r` was set as 10)
+
+However, the above implementation is not memory and computationally efficient because some rows in `df` are duplicated.
+
+
+## A more efficient implmentation with multinomial distribution
+
+We could use multinomial distribution to represent the frequency of each row.
+
+Imagine that we have a dataset of original size of 100 and each subsample is of size 10
+```{r}
+n <- 100
+df <- tibble(x = rnorm(n), y = rnorm(n))
+df1 <- df %>% slice(1:10)
+```
+
+We will need sample `n` obs from `df1` which replacement. Naively,
+```{r}
+df1[sample(seq_len(nrow(df1)), n, replace = TRUE), ] %>%
+  arrange(x, y)
+```
+
+But a lot of rows are duplicated!
+
+A more efficient way is to first generate the repetitions by multinomial distribution.
+
+```{r}
+df1 %>%
+  mutate(freq = rmultinom(1, n, rep(1, n())))
+```
+
+*Compute the statistic with the frequencies*
+
+```{r, message = FALSE}
+n <- nrow(flights)
+df <- read_csv(file_names[1], col_types = cols()) %>%
+  select(dep_delay, arr_delay) %>%
+  drop_na() %>%
+  mutate(freq = rmultinom(1, n, rep(1, n())))
+df
+```
+
+How do you calculate the mean based on frequencies? (weighted mean!)
+```{r}
+with(df, weighted.mean(dep_delay, freq))
+```
+```{r}
+df %>%
+  mutate(s = dep_delay * freq) %>%
+  summarize(sum(s) / sum(freq)) %>%
+  pull()
+```
+
+
+What if we want weighted correlation between two variables? Base R doesn't provide function to compute weighted correlations. Let's do it manually.
+
+Recall that ordinary correlation is
+$$
+r = \frac{\sum (x_i-\bar x) (y_i-\bar y)}{\sqrt{\sum (x_i-\bar x)^2  \sum (y_i-\bar y)^2 }}
+$$
+But now some $(x_i, y_i)$ are repeated, to be more precise, each of them repeated $w_i$ times. So the formula is now
+$$
+r = \frac{\sum w_i (x_i-\bar x_w) (y_i-\bar y_w)}{\sqrt{\sum w_i (x_i-\bar x_w)^2  \sum w_i (y_i-\bar y_w)^2 }}
+$$
+where $\bar x_w = \sum(w_i x_i)/ n$, $\bar y_w = \sum(w_i y_i)/ n$ and $n = \sum w_i$
+
+Of course, it is not computationally efficient, with some algebra, the computational formula is derived
+
+$$
+r = \frac{
+  \sum w_i x_i y_i-  (\sum w_i x_i \sum w_i y_i)/n
+}{
+  \sqrt{\left[\sum w_i x_i^2- (\sum w_i x_i)/n \right]\left[ \sum w_i y_i^2-  (\sum w_i y_i)/n \right] }
+}
+$$
+where $n = \sum w_i$.
+
+```{r}
+weighted_cor <- function(x, y, weights) {
+  n <- sum(weights)
+  sumx <- sum(weights * x)
+  sumy <- sum(weights * y)
+  sxx <- sum(weights * x^2) - sumx^2 / n
+  syy <- sum(weights * y^2) - sumy^2 / n
+  sxy <- sum(weights * x * y) - sumx * sumy / n
+  sxy / sqrt(sxx * syy)
+}
+```
+PS: there are still ways to improve it.
+
+
+Compare it with the duplicated data to make sure that `weighted_cor` works
+```{r}
+df %>%
+  slice(rep(seq_len(n()), freq)) %>%
+  summarise(cor(dep_delay, arr_delay))
+```
+```{r}
+with(df, weighted_cor(dep_delay, arr_delay, freq))
+```
+
+
+*Put everything back*
+
+```{r, message = FALSE}
+r <- 100 # r should be at least a few thousands, we are using 100 for demo
+n <- nrow(flights)
+
+
+ci_list <- file_names %>% map(~ {
+  df <- read_csv(., col_types = cols()) %>%
+    select(dep_delay, arr_delay) %>%
+    drop_na()
+  map_dbl(seq_len(r), ~ {
+    freq <- rmultinom(1, n, rep(1, nrow(df)))
+    with(df, weighted_cor(dep_delay, arr_delay, freq))
+  }) %>%
+    quantile(c(0.025, 0.975))
+})
+
+reduce(ci_list, `+`) / length(ci_list)
+```
+
+
+## A parallel version using `furrr`.
+
+
+```{r, message = FALSE}
+library(furrr)
+plan(multiprocess, workers = 4)
+```
+
+```{r, message = FALSE}
+ci_list <- file_names %>% future_map(~ {
+  df <- read_csv(., col_types = cols()) %>%
+    select(dep_delay, arr_delay) %>%
+    drop_na()
+  map_dbl(seq_len(r), ~ {
+    freq <- rmultinom(1, n, rep(1, nrow(df)))
+    unclass(with(df, weighted_cor(dep_delay, arr_delay, freq)))
+  }) %>%
+    quantile(c(0.025, 0.975))
+})
+
+reduce(ci_list, `+`) / length(ci_list)
+```

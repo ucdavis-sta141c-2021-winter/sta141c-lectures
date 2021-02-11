@@ -1,0 +1,60 @@
+digraph mapreduce {
+  rankdir=LR;
+  node [shape = rectangle]
+  data [label = 'data']
+  node1 [label = 'subsample 1']
+  node2 [label = 'subsample 2']
+  nodes [label = 'subsample s']
+  stat1 [label = 'statistic 1*']
+  stat2 [label = 'statistic 2*']
+  stats [label = 'statistic s*']
+
+  bt11 [label = 'bootstrap 1,1']
+  bt1r [label = 'bootstrap 1,r']
+  bt21 [label = 'bootstrap 2,1']
+  bt2r [label = 'bootstrap 2,r']
+  bts1 [label = 'bootstrap s,1']
+  btsr [label = 'bootstrap s,r']
+
+  fun11 [label = 'statistic 1,1']
+  fun1r [label = 'statistic 1,r']
+  fun21 [label = 'statistic 2,1']
+  fun2r [label = 'statistic 2,r']
+  funs1 [label = 'statistic s,1']
+  funsr [label = 'statistic s,r']
+
+  data -> node2 [label = 'map']
+  data -> {node1, nodes}
+  node2 -> nodes [style = dotted, arrowhead = none]
+  {rank = same; node1; node2; nodes;}
+
+  node1 -> bt11
+  node1 -> bt1r
+  bt11 -> bt1r [style = dotted, arrowhead = none]
+  node2 -> bt21
+  node2 -> bt2r
+  bt21 -> bt2r [style = dotted, arrowhead = none]
+  nodes -> bts1
+  nodes -> btsr
+  bts1 -> btsr [style = dotted, arrowhead = none]
+  {rank = same; bt11; bt1r; bt21; bt2r; bts1; btsr}
+
+  bt11 -> fun11
+  bt1r -> fun1r
+  fun11 -> fun1r [style = dotted, arrowhead = none]
+  bt21 -> fun21
+  bt2r -> fun2r
+  fun21 -> fun2r [style = dotted, arrowhead = none]
+  bts1 -> funs1
+  btsr -> funsr
+  funs1 -> funsr [style = dotted, arrowhead = none]
+  {rank = same; fun11; fun1r; fun21; fun2r; funs1; funsr}
+
+  {fun11, fun1r} -> stat1
+  {fun21, fun2r} -> stat2
+  {funs1, funsr} -> stats
+
+  {rank = same; stat1; stat2; stats;}
+  {stat1, stats} -> result
+  stat2 -> result [label = "reduce"]
+}
