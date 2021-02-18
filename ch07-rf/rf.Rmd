@@ -12,6 +12,8 @@ library(tidyverse)
 ```
 
 
+Slides: p1-p20, p37-p43
+
 # Tree
 
 We only illustrate it via a classification tree. Much of the followings are also true for regression tree.
@@ -23,18 +25,34 @@ data(spam)
 
 
 ```{r}
-tree_spam <- tree(type ~ ., spam)
+# classification tree
+tree_spam <- tree(type ~ ., data = spam)
 plot(tree_spam, type = "uniform")
 text(tree_spam, pretty = 1, all = TRUE, cex = 0.7)
 ```
 
+```{r}
+# regression tree
+tree_mtcars <- tree(mpg ~ ., data = mtcars)
+plot(tree_mtcars, type = "uniform")
+text(tree_mtcars, pretty = 1, all = TRUE, cex = 0.7)
+```
 
+
+```{r}
+# a tree is not very stable wrt change of data
+tree_spam <- tree(type ~ ., data = spam[sample.int(nrow(spam), 1000),])
+plot(tree_spam, type = "uniform")
+text(tree_spam, pretty = 1, all = TRUE, cex = 0.7)
+```
 
 # Random forest
 
 In R, there are packages like `randomForest` and `ranger` to perform random forest. However, we want to implement it from scratch.
 
-The main idea bebind random forest is to resample the dataset by sampling the row with replacement and selecting the columns randomly.
+The main idea behind random forest is to resample the dataset by 
+- sampling the rows with replacement and 
+- selecting the columns randomly.
 
 
 For the `spam` data, suppose we want to predict the class of a random observation.
@@ -42,17 +60,41 @@ For the `spam` data, suppose we want to predict the class of a random observatio
 
 ```{r}
 set.seed(141)
-new_data <- spam %>% sample_n(1)
+new_data <- spam %>% sample_n(1) %>% select(-type)
 ```
 
 With the whole tree, we could do
 ```{r}
+tree_spam <- tree(type ~ ., data = spam)
 predict(tree_spam, new_data)
+predict(tree_spam, new_data, type = "class")
 ```
-that gives the probabiliy of nonspam about 0.81.
+that gives the probability of nonspam about 0.81.
 
 
-However it is known that a single tree is not predictive. We want to use bootstrap to increase the predictivity.
+However it is known that a single tree is not predictive and stable. We want to use bootstrap to increase the predictability.
+
+
+```{r}
+# select row randomly with replacement
+spam_boot <- tree(type ~ ., data = spam[sample.int(nrow(spam), replace = TRUE), ])
+predict(spam_boot, new_data)
+predict(spam_boot, new_data, type = "class")
+```
+```{r}
+# select row randomly with replacement and select columnes randomly
+all_col_names <- names(spam)[1:57] 
+m <- 8   # = round(sqrt(ncol(spam)))
+col_names <- c("type", sample(all_col_names, m))
+spam_boot <- tree(type ~ ., data = spam[sample.int(nrow(spam), replace = TRUE), col_names])
+plot(spam_boot, type = "uniform")
+text(spam_boot, pretty = 1, all = TRUE, cex = 0.7)
+predict(spam_boot, new_data)
+predict(spam_boot, new_data, type = "class")
+```
+
+
+
 
 ```{r}
 r <- 1000 # in practise, we need a larger value, say 10000
@@ -85,13 +127,13 @@ mean(probs > baseline)
 ```
 Since more than 50% of the trees predicted `spam`, by consensus, the predicted class for the new data is spam.
 
-### By averaging probablies
+### By averaging probabilies
 
 ```{r}
 mean(probs)
 ```
 
-The average probabliy acress all trees is 0.45 > baseline so the predicted class is "spam". For this new data, we have the same prediction using average probability.
+The average probabliy acress all trees is 0.45 > baseline so the predicted class for `new_data` is "spam". For this new data, we have the same prediction using average probability.
 
 
 In general, it is more stable to use average probability rather than consensus.
