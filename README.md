@@ -42,6 +42,7 @@
 |       | ~~[multidplyr](ch05-parallel/multidplyr.Rmd)~~ | [multidplyr](https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch05-parallel/multidplyr.html) |
 | 02-10 | [bootstrap](ch06-bootstrap/bootstrap.Rmd)      | [bootstrap](https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch06-bootstrap/bootstrap.html)  |
 |       | [blb](ch06-bootstrap/blb.Rmd)                  | [blb](https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch06-bootstrap/blb.html)              |
+| 02-18 | [random forest](ch07-rf/rf.Rmd)                | [rf](https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch07-rf/rf.html)                       |
 
 ## Links
 
