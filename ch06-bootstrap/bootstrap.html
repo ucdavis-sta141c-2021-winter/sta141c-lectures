@@ -262,7 +262,7 @@ slope &lt;- function(x, y) {
   sxy/sxx
 }
 (alphahat &lt;- slope(x, y))</code></pre>
-<pre><code>## [1] 2.94589</code></pre>
+<pre><code>## [1] 2.984644</code></pre>
 <p>In the ideal world, assume that we know how to simulate <span class="math inline">\(x\)</span> and <span class="math inline">\(y\)</span>.</p>
 <pre class="r"><code>se &lt;- rerun(1000, {
     n &lt;- 100
@@ -277,7 +277,7 @@ slope &lt;- function(x, y) {
 
 # a 95% confidence interval
 alphahat + c(-1, 1) * 1.96 * se</code></pre>
-<pre><code>## [1] 2.848078 3.043702</code></pre>
+<pre><code>## [1] 2.884373 3.084914</code></pre>
 <p>where <code>qnorm(0.975)</code> is roughly 1.96.</p>
 <ul>
 <li>The procedure outlined above cannot be applied, because for real data we cannot generate new samples from the original population.</li>
@@ -316,7 +316,7 @@ alphahat + c(-1, 1) * 1.96 * se</code></pre>
   sd
 
 alphahat + c(-1, 1) * 1.96 * se</code></pre>
-<pre><code>## [1] 2.858748 3.033032</code></pre>
+<pre><code>## [1] 2.869345 3.099942</code></pre>
 </div>
 <div id="a-general-picture-for-the-bootstrap" class="section level2">
 <h2>A general picture for the bootstrap</h2>
@@ -363,7 +363,7 @@ se &lt;- boots %&gt;%
   sd()
 
 cor(mtcars$mpg, mtcars$hp) + 1.96 * c(-1, 1) * se</code></pre>
-<pre><code>## [1] -0.8682379 -0.6840988</code></pre>
+<pre><code>## [1] -0.8682436 -0.6840932</code></pre>
 </div>
 <div id="using-purrr" class="section level2">
 <h2>Using <code>purrr</code></h2>
@@ -377,7 +377,7 @@ se &lt;- map_dbl(seq_len(10000), ~{
   }) %&gt;% sd()
 
 cor(mtcars$mpg, mtcars$hp) + 1.96 * c(-1, 1) * se</code></pre>
-<pre><code>## [1] -0.8680968 -0.6842400</code></pre>
+<pre><code>## [1] -0.8689191 -0.6834176</code></pre>
 <div id="bootstrap-percentile-confidence-interval" class="section level3">
 <h3>Bootstrap Percentile confidence interval</h3>
 <ul>
@@ -394,7 +394,7 @@ map_dbl(seq_len(10000), ~{
   }) %&gt;% 
   quantile(p = c(0.025, 0.975))</code></pre>
 <pre><code>##       2.5%      97.5% 
-## -0.8749106 -0.6887403</code></pre>
+## -0.8738209 -0.6886098</code></pre>
 </div>
 </div>
 <div id="using-parallel-to-do-bootstrap-the-conventional-approach" class="section level2">
@@ -414,11 +414,11 @@ rs &lt;- parSapply(cl, seq_len(B), function(i) {
 
 # classical bootstrap
 cor(mtcars$mpg, mtcars$hp) + 1.96 * c(-1, 1) * sd(rs)</code></pre>
-<pre><code>## [1] -0.8683987 -0.6839380</code></pre>
+<pre><code>## [1] -0.8686447 -0.6836921</code></pre>
 <pre class="r"><code># bootstrap percentile
 rs %&gt;% quantile(c(0.025, 0.975))</code></pre>
 <pre><code>##       2.5%      97.5% 
-## -0.8742419 -0.6935467</code></pre>
+## -0.8754438 -0.6909200</code></pre>
 <pre class="r"><code>stopCluster(cl)  # stop the cluster finally</code></pre>
 </div>
 <div id="using-furrr-to-do-bootstrap-my-recommendation-over-parsapplyparlapply" class="section level2">
@@ -438,11 +438,11 @@ rs &lt;- future_map_dbl(seq_len(B), ~{
 
 # classical bootstrap
 cor(mtcars$mpg, mtcars$hp) + 1.96 * c(-1, 1) * sd(rs)</code></pre>
-<pre><code>## [1] -0.8680629 -0.6842738</code></pre>
+<pre><code>## [1] -0.8681337 -0.6842031</code></pre>
 <pre class="r"><code># bootstrap percentile
 rs %&gt;% quantile(c(0.025, 0.975))</code></pre>
 <pre><code>##       2.5%      97.5% 
-## -0.8743529 -0.6917138</code></pre>
+## -0.8747586 -0.6912113</code></pre>
 </div>
 </div>
 <div id="reference" class="section level1">

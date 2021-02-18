@@ -251,6 +251,7 @@ cor(mtcars$mpg, mtcars$hp) + 1.96 * c(-1, 1) * sd(rs)
 rs %>% quantile(c(0.025, 0.975))
 ```
 
+
 ```{r}
 stopCluster(cl)  # stop the cluster finally
 ```

@@ -75,7 +75,7 @@ cor.test(flights$dep_delay, flights$arr_delay)$conf.int
 
 # The bag of little bootstraps (BLB)
 
-It is a procedure which incorporates features of both the bootstrap and subsampling to yield a robust, computationally efficient means of assessing the quality of estimators
+It is a procedure which incorporates features of both the bootstrap and subsampling to yield a robust, computationally efficient means of assessing the quality of estimators (i.e., construct confidence intervals )
 
 
 ```{r, echo = FALSE}
@@ -83,7 +83,7 @@ DiagrammeR::grViz("blb.gv", height = 300)
 ```
 
 
-Bascially, the bag of little bootstraps = subsample + bootstrap. However, for each bootstrap, we sample $n$ from $b$ with replacement instead of sample $b$ from $b$ as in oridinary bootstrap.
+Bascially, the bag of little bootstraps = mapreduce + bootstrap. However, for each bootstrap, we sample $n$ from $b$ with replacement instead of sample $b$ from $b$ as in oridinary bootstrap.
 
 - sample without replacement the sample $s$ times into sizes of $b$
 - for each subsample
@@ -93,7 +93,7 @@ Bascially, the bag of little bootstraps = subsample + bootstrap. However, for ea
 - take the average of the statistics
 
 
-## A naive (single core) implementation
+## A naive (single core) implementation of blb
 
 ```{r, message = FALSE}
 r <- 10 # r should be at least a few thousands, say 10000, we are using 10 for demo
@@ -104,7 +104,8 @@ ci_list <- file_names %>% map(~ {
     select(dep_delay, arr_delay)
   seq_len(r) %>%
     map_dbl(~ {
-      df <- df[sample(seq_len(nrow(df)), n, replace = TRUE), ]
+      index <- sample(seq_len(nrow(df)), n, replace = TRUE)
+      df <- df[index, ]
       cor(df$dep_delay, df$arr_delay, use = "pairwise.complete.obs")
     }) %>%
     quantile(c(0.025, 0.975))
@@ -154,17 +155,23 @@ df <- read_csv(file_names[1], col_types = cols()) %>%
   mutate(freq = rmultinom(1, n, rep(1, n())))
 df
 ```
+We need weighted correlation!.
 
-How do you calculate the mean based on frequencies? (weighted mean!)
+Sidetrack: How do you calculate the mean based on frequencies? (weighted mean!)
 ```{r}
 with(df, weighted.mean(dep_delay, freq))
 ```
+
 ```{r}
 df %>%
   mutate(s = dep_delay * freq) %>%
   summarize(sum(s) / sum(freq)) %>%
   pull()
 ```
+
+$$
+\text{weighted mean} = \frac{\sum_{i=1}^b w_i x_i}{\sum_{i=1}^b w_i}
+$$
 
 
 What if we want weighted correlation between two variables? Base R doesn't provide function to compute weighted correlations. Let's do it manually.
@@ -208,7 +215,8 @@ Compare it with the duplicated data to make sure that `weighted_cor` works
 ```{r}
 df %>%
   slice(rep(seq_len(n()), freq)) %>%
-  summarise(cor(dep_delay, arr_delay))
+  summarise(cor(dep_delay, arr_delay)) %>% 
+  pull
 ```
 ```{r}
 with(df, weighted_cor(dep_delay, arr_delay, freq))
@@ -243,6 +251,7 @@ reduce(ci_list, `+`) / length(ci_list)
 ```{r, message = FALSE}
 library(furrr)
 plan(multiprocess, workers = 4)
+options(future.rng.onMisuse = "ignore")
 ```
 
 ```{r, message = FALSE}
