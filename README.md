@@ -1,6 +1,6 @@
 
   - [STA 141C Big Data & High Performance Statistical
-    Computing](#sta-141c-big-data-high-performance-statistical-computing)
+    Computing](#sta-141c-big-data--high-performance-statistical-computing)
       - [People](#people)
       - [Material](#material)
       - [Links](#links)
@@ -81,11 +81,11 @@
 
 ## Grading
 
-| Category                                                                        | Grade Percentage |
-| ------------------------------------------------------------------------------- | ---------------- |
-| Assignments                                                                     | 65%              |
-| [Final Project](https://github.com/ucdavis-sta141c-2021-winter/sta141c-project) | 25%              |
-| Participation                                                                   | 10%              |
+| Category                                                                                             | Grade Percentage |
+| ---------------------------------------------------------------------------------------------------- | ---------------- |
+| Assignments                                                                                          | 65%              |
+| [Final Project](https://github.com/ucdavis-sta141c-2021-winter/sta141c-lectures/tree/master/project) | 25%              |
+| Participation                                                                                        | 10%              |
 
   - There will be around 6 assignments and they are assigned via GitHub
     classroom.
