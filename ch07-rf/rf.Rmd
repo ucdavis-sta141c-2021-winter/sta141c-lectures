@@ -7,8 +7,8 @@ output:
 ---
 
 ```{r}
-library(tree)
 library(tidyverse)
+library(tree)
 ```
 
 
@@ -82,7 +82,7 @@ predict(spam_boot, new_data)
 predict(spam_boot, new_data, type = "class")
 ```
 ```{r}
-# select row randomly with replacement and select columnes randomly
+# select row randomly with replacement and select columns randomly
 all_col_names <- names(spam)[1:57] 
 m <- 8   # = round(sqrt(ncol(spam)))
 col_names <- c("type", sample(all_col_names, m))
@@ -94,10 +94,8 @@ predict(spam_boot, new_data, type = "class")
 ```
 
 
-
-
 ```{r}
-r <- 1000 # in practise, we need a larger value, say 10000
+r <- 500
 m <- 8
 n <- nrow(spam)
 all_col_names <- names(spam)[1:57]  # skip "type"
@@ -106,50 +104,88 @@ probs <- map_dbl(seq_len(r), function(i) {
   col_names <- c("type", sample(all_col_names, m))
   spam_boot <- spam[sample(n, n, replace = TRUE), col_names]
   tree_spam_boot <- tree(type ~ ., spam_boot)
-  # we only need the probabliy of spam, because the sum of the two values is always 1
+  # we only need the probability of spam, because the sum of the two values is always 1
   predict(tree_spam_boot, new_data)[2]
 })
 ```
 
-There are two ways to yield the final predicted class, either by consensus or by averaging probablies. Either way, we need a baseline to compare with -
+There are two ways to yield the final predicted class, either by consensus or by averaging probabilities. Either way, we need a baseline to compare with -
 using the prior proportion as the baseline is a simplest way (though may not be the best way). One may also use CV to select the baseline.
 
 ```{r}
 (baseline <- mean(spam$type == "spam"))
 ```
-
-
-
-### Consensus
+- prediction by consensus
 
 ```{r}
 mean(probs > baseline)
 ```
 Since more than 50% of the trees predicted `spam`, by consensus, the predicted class for the new data is spam.
 
-### By averaging probabilies
+- prediction by averaging probabilies
 
 ```{r}
 mean(probs)
 ```
 
-The average probabliy acress all trees is 0.45 > baseline so the predicted class for `new_data` is "spam". For this new data, we have the same prediction using average probability.
+The average probability across all trees is 0.45 > baseline so the predicted class for `new_data` is "spam". For this new data, we have the same prediction using average probability.
 
 
 In general, it is more stable to use average probability rather than consensus.
 
 
+# Size for the trees
+
+
+In general, we want to keep each tree as large as possible
+```{r}
+r <- 500
+m <- 8
+n <- nrow(spam)
+all_col_names <- names(spam)[1:57]  # skip "type"
+
+probs <- map_dbl(seq_len(r), function(i) {
+  col_names <- c("type", sample(all_col_names, m))
+  spam_boot <- spam[sample(n, n, replace = TRUE), col_names]
+  # make larger trees by `tree.control`
+  tree_spam_boot <- tree(type ~ ., spam_boot, control = tree.control(n, mindev = 0.001))
+  # we only need the probability of spam, because the sum of the two values is always 1
+  predict(tree_spam_boot, new_data)[2]
+})
+```
+
+```{r}
+# better result!?
+mean(probs)
+```
+
 # Confidence interval
 
-To construst a CI, you may be thinking of
+To construct a CI, you may be thinking of
 
 ```{r}
 quantile(probs, c(0.025, 0.975))
 ```
 
-This confidence interval is essentially the bootstrap percentile interval for a tree model which randomly selects $m$ predictors. It is not very reliable because the sampling of the columns introduces extra variability. 
-
-A correct way is to make use of the Jackknife, see https://arxiv.org/pdf/1311.4555.pdf
+This confidence interval is essentially the bootstrap percentile interval for a tree model which randomly selects $m$ predictors. It is not reliable because the sampling of the columns introduces extra variability. A more sophicated way is to make use of the Jackknife, see https://arxiv.org/pdf/1311.4555.pdf
 
 Well, it is too hard!? Use the package `ranger`!
+
+# `ranger`
+
+In practice, we will use `ranger` because it is way faster.
+
+```{r}
+library(ranger)
+
+fit <- ranger(type ~ ., data = spam, probability = TRUE)
+```
+
+```{r}
+predicted <- predict(fit, new_data, type = "response")
+predicted
+```
+```{r}
+predicted$predictions
+```
 
