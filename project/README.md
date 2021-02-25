@@ -23,7 +23,7 @@ Your job is improved my package to various ways.
 
 1. You should also write a few pages Rmarkdown documentation to explain your work. One recommendation way is to put the documentation as a [vignette](https://r-pkgs.org/vignettes.html). (If you want to use `tidyverse` in the the vignettes, run `usethis::use_package("tidyverse", type = "suggest")` to add `tidyverse` in the suggest field of DESCRIPTION.)
 
-1. To get higher grades, you will need to implement bang of little bootstraps to other models such as 
+1. To get higher grades, you will need to implement bag of little bootstraps to other models such as 
 random forest (e.g. `blbrf`) or logistic regression (e.g. `blblogreg`). 
 
 
