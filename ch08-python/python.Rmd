@@ -1,0 +1,252 @@
+---
+title: "Python interoperability"
+output: 
+  html_document: 
+    toc: yes
+editor_options: 
+  chunk_output_type: inline
+---
+
+
+# R vs Python
+
+Why not both?
+
+
+## Setup
+
+### Step 1
+To use python in R, we need to install the R package `reticulate`.
+```{r}
+library(reticulate)
+```
+
+### Step 2
+
+
+Display python environment detected. You will be prompted to install `miniconda` if no suitable python is detected.
+
+```{r, eval = FALSE}
+py_discover_config()
+```
+
+In this class, we are going to focus on `miniconda.` If your system has another workable python environment, you will need to manually install `miniconda` with
+```{r, eval = FALSE}
+reticulate::install_miniconda()
+```
+and specify to use `miniconda` after loading `reticulate`, like this
+
+```{r, eval = FALSE}
+library(reticulate)
+use_miniconda(required = TRUE)  # only needed if your computer has multiple installations of python.
+```
+
+Visit [reticulate](https://rstudio.github.io/reticulate/articles/versions.html) website if you want to configure R to use different version of python then miniconda.
+
+
+## Ways to use python
+
+There are a variety of ways to integrate Python code into your R projects:
+
+- Python in R Markdown
+
+
+```{python}
+import random
+x = random.random()
+x
+```
+
+```{r}
+# to access Python objects in R
+py$x
+```
+
+- Importing Python module
+
+The `import()` function enables you to import any Python module and call its functions directly from R. 
+
+```{r}
+random <- import("random")
+y <- random$random()
+```
+
+```{python}
+# to access R object in python
+r.y
+```
+
+The `import_builtins()` function enables to access the [built in functions](https://docs.python.org/3/library/functions.html#built-in-funcs).
+
+```{r}
+builtins <- import_builtins()
+a <- builtins$range(5L)
+
+builtins <- import_builtins()
+builtins$len(a)
+```
+
+
+- Sourcing Python scripts: The `source_python()` function enables you to source a Python script the same way you would source() an R script (Unless `envir = NULL`, Python functions and objects defined within the script become directly available to the R session).
+
+
+```{r}
+source_python("script.py")
+z
+```
+
+
+```{r}
+# personally, I recommend using `envir = NULL` so no implicit copying is done
+source_python("script.py", envir = NULL)
+py$z
+```
+
+
+- Python REPL: `repl_python()`
+
+
+## Python basics
+
+https://learnxinyminutes.com/docs/python/
+https://www.pyscoop.com/learn-python-in-10-minutes/
+
+
+## Type conversions
+
+
+https://rstudio.github.io/reticulate/#type-conversions
+
+By default when Python objects are returned to R they are converted to their equivalent R types.
+
+```{r}
+random <- import("random")
+(x <- random$random())
+class(x)
+```
+
+However, if you'd rather make conversion from Python to R explicit and deal in native Python objects by default you can pass `convert = FALSE` to the import function
+
+```{r}
+random <- import("random", convert = FALSE)
+(x <- random$random())
+class(x)
+```
+
+We cannot work with native Python objects directly.
+```{r, error = TRUE}
+x + 1
+```
+
+The function `py_to_r` converts native Python objects to R objects.
+```{r}
+# convert x to R object first
+py_to_r(x) + 1
+```
+
+Let's check another numpy example.
+```{r}
+np <- import("numpy", convert = FALSE)
+
+# do some array manipulations with NumPy
+a <- np$array(1:4)
+sum <- a$cumsum()
+
+# convert to R explicitly at the end
+py_to_r(sum)
+```
+
+R Objects are converted to Python objects when they are passed to Python functions.
+
+```{python}
+def abssum(x):
+    print("received a {} object\n".format(type(x)))
+    return sum((abs(z) for z in x))
+```
+
+```{r}
+x <- rnorm(10)
+# x is implicitly to a native Python list
+py$abssum(x)
+```
+
+## scikit-learn
+
+[`scikit-learn`](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LinearRegression.html) is a popular package for doing machine learning. It could be installed with
+```{r, eval = FALSE}
+py_install("scikit-learn")
+```
+
+
+```{python}
+import numpy as np
+from sklearn.linear_model import LinearRegression
+```
+
+
+To use it,
+```{python}
+X = np.array([[1, 1], [1, 2], [2, 2], [2, 3]])
+# y = 1 * x_0 + 2 * x_1 + e
+beta = np.array([1, 2])
+e = np.random.normal(0, 0.1, X.shape[0])
+y = 3.14 + X.dot(beta) + e
+
+lr = LinearRegression()
+lr.fit(X, y)
+print(lr.coef_)
+print(lr.intercept_)
+```
+
+```{python}
+Xtest = np.array([[1, 3]])
+lr.predict(Xtest)
+# double check
+lr.intercept_ + Xtest.dot(lr.coef_)
+```
+
+
+How about passing R dataframes to it? Say we want to regress `mpg ~ hp * wt` of `mtcars`.
+
+Method 1: prepare a function in python first
+
+```{python}
+from sklearn.linear_model import LinearRegression
+def pylm(X, y):
+  lr = LinearRegression()
+  lr.fit(X, y)
+  return lr
+
+```
+
+
+```{r}
+# we do not need intercept
+X <- model.matrix(~ -1 + hp * wt, mtcars)
+y <- mtcars$mpg
+fit <- py$pylm(X, y)
+Xtest <- model.matrix(~ -1 + hp * wt, 
+                      data.frame(hp = 1, wt = 2))
+fit$predict(Xtest)
+```
+
+
+Method 2: Import python module directly.
+
+```{r}
+sklearn <- import("sklearn")
+LinearRegression <- sklearn$linear_model$LinearRegression
+
+X <- model.matrix(~ -1 + hp * wt, mtcars)
+y <- mtcars$mpg
+lr <- LinearRegression()
+lr$fit(X, y)
+
+lr$coef_
+```
+
+```{r}
+Xtest <- data.frame(hp = 1, wt = 2)
+XMatrix <- model.matrix(~ -1 + hp * wt, Xtest)
+lr$predict(XMatrix)
+```
