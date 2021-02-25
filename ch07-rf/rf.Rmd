@@ -81,6 +81,7 @@ spam_boot <- tree(type ~ ., data = spam[sample.int(nrow(spam), replace = TRUE), 
 predict(spam_boot, new_data)
 predict(spam_boot, new_data, type = "class")
 ```
+
 ```{r}
 # select row randomly with replacement and select columns randomly
 all_col_names <- names(spam)[1:57] 
@@ -96,8 +97,8 @@ predict(spam_boot, new_data, type = "class")
 
 ```{r}
 r <- 500
-m <- 8
 n <- nrow(spam)
+m <- 8  # about sqrt(57)
 all_col_names <- names(spam)[1:57]  # skip "type"
 
 probs <- map_dbl(seq_len(r), function(i) {
@@ -109,12 +110,14 @@ probs <- map_dbl(seq_len(r), function(i) {
 })
 ```
 
+
 There are two ways to yield the final predicted class, either by consensus or by averaging probabilities. Either way, we need a baseline to compare with -
 using the prior proportion as the baseline is a simplest way (though may not be the best way). One may also use CV to select the baseline.
 
 ```{r}
 (baseline <- mean(spam$type == "spam"))
 ```
+
 - prediction by consensus
 
 ```{r}
@@ -122,23 +125,24 @@ mean(probs > baseline)
 ```
 Since more than 50% of the trees predicted `spam`, by consensus, the predicted class for the new data is spam.
 
-- prediction by averaging probabilies
+- prediction by averaging probabilities
 
 ```{r}
 mean(probs)
 ```
 
-The average probability across all trees is 0.45 > baseline so the predicted class for `new_data` is "spam". For this new data, we have the same prediction using average probability.
+The average probability across all trees is about 0.44 > baseline so the predicted class for `new_data` is "spam". For this new data, we have the same prediction using average probability.
 
 
 In general, it is more stable to use average probability rather than consensus.
 
 
-# Size for the trees
+# `rpart` package
 
 
 In general, we want to keep each tree as large as possible
-```{r}
+
+```{r, eval = FALSE}
 r <- 500
 m <- 8
 n <- nrow(spam)
@@ -148,7 +152,20 @@ probs <- map_dbl(seq_len(r), function(i) {
   col_names <- c("type", sample(all_col_names, m))
   spam_boot <- spam[sample(n, n, replace = TRUE), col_names]
   # make larger trees by `tree.control`
-  tree_spam_boot <- tree(type ~ ., spam_boot, control = tree.control(n, mindev = 0.001))
+  tree_spam_boot <- tree(type ~ ., spam_boot, control = tree.control(n, mindev = 0.00001))
+  # we only need the probability of spam, because the sum of the two values is always 1
+  predict(tree_spam_boot, new_data)[2]
+})
+```
+
+```{r}
+library(rpart)
+
+probs <- map_dbl(seq_len(r), function(i) {
+  col_names <- c("type", sample(all_col_names, m))
+  spam_boot <- spam[sample(n, n, replace = TRUE), col_names]
+  # make larger trees by using rpart
+  tree_spam_boot <- rpart(type ~ ., spam_boot, control = rpart.control(cp = 0))
   # we only need the probability of spam, because the sum of the two values is always 1
   predict(tree_spam_boot, new_data)[2]
 })
@@ -158,6 +175,51 @@ probs <- map_dbl(seq_len(r), function(i) {
 # better result!?
 mean(probs)
 ```
+
+# A regression tree example
+
+```{r}
+r <- 500
+m <- 8
+n <- nrow(mtcars)
+all_col_names <- names(mtcars)[2:10] # skip "type"
+one_row <- mtcars %>% sample_n(1)
+new_data <- one_row %>% select(-mpg) # pretend that it is a new data
+
+yhat <- map_dbl(seq_len(r), function(i) {
+  col_names <- c("mpg", sample(all_col_names, m))
+  mtcars_boot <- mtcars[sample(n, n, replace = TRUE), col_names]
+  # make larger trees by using rpart
+  tree_mtcars_boot <- rpart(mpg  ~ ., mtcars_boot, control = rpart.control(cp = 0))
+  predict(tree_mtcars_boot, new_data)
+})
+```
+
+```{r}
+mean(yhat)
+```
+```{r}
+# the true value
+one_row$mpg
+```
+
+
+# `ranger` package
+
+In practice, we will use `ranger` for random forest because it is way faster.
+
+```{r}
+library(ranger)
+
+fit <- ranger(type ~ ., data = spam, probability = TRUE)
+```
+
+```{r}
+new_data <- spam %>% sample_n(1) %>% select(-type)
+predicted <- predict(fit, new_data, type = "response")
+predicted$predictions
+```
+
 
 # Confidence interval
 
@@ -171,21 +233,17 @@ This confidence interval is essentially the bootstrap percentile interval for a 
 
 Well, it is too hard!? Use the package `ranger`!
 
-# `ranger`
-
-In practice, we will use `ranger` because it is way faster.
-
 ```{r}
-library(ranger)
-
-fit <- ranger(type ~ ., data = spam, probability = TRUE)
+fit <- ranger(type ~ ., data = spam, probability = TRUE, keep.inbag = TRUE)
+predicted <- predict(fit, new_data, type = "se")
 ```
 
-```{r}
-predicted <- predict(fit, new_data, type = "response")
-predicted
-```
 ```{r}
 predicted$predictions
+predicted$se
+```
+
+```{r}
+predicted$predictions[2] + c(-1, 1) * 1.96 * predicted$se[2]
 ```
 
