@@ -32,7 +32,8 @@ output:
 | 02-10 | [bootstrap](ch06-bootstrap/bootstrap.Rmd)      | [bootstrap]
 |       | [blb](ch06-bootstrap/blb.Rmd)                  | [blb]
 | 02-18 | [random forest](ch07-rf/rf.Rmd)                  | [rf]
-
+| 02-25 | [python](ch08-python/python.Rmd)                | [python]
+| 03-02| [keras](ch09-deep-learning/keras.Rmd)                | [keras]
 
 [introduction]: README.md
 [purrr]: https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch01-purrr/purrr.html
@@ -44,6 +45,8 @@ output:
 [bootstrap]: https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch06-bootstrap/bootstrap.html
 [blb]: https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch06-bootstrap/blb.html
 [rf]: https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch07-rf/rf.html
+[python]: https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch08-python/python.html
+[keras]: https://ucdavis-sta141c-2021-winter.github.io/sta141c-lectures/ch09-deep-learning/keras.html
 
 
 ## Links
