@@ -28,7 +28,7 @@ output:
 | 01-25 | [Rcpp](ch03-rcpp/rcpp.Rmd)                     | [Rcpp]
 | 02-02 | [R-pkgs](https://r-pkgs.org/)                  |
 | 02-04 | [parallel](ch05-parallel/parallel.Rmd)         | [parallel]
-|       | ~~[multidplyr](ch05-parallel/multidplyr.Rmd)~~ | [multidplyr]
+|       | ~~[multidplyr](ch05-parallel/multidplyr.Rmd)~~ | ~~[multidplyr]~~
 | 02-10 | [bootstrap](ch06-bootstrap/bootstrap.Rmd)      | [bootstrap]
 |       | [blb](ch06-bootstrap/blb.Rmd)                  | [blb]
 | 02-18 | [random forest](ch07-rf/rf.Rmd)                  | [rf]
@@ -70,9 +70,9 @@ Learn how to ask a question. Asking a question is an art, [stackoverflow.com](ht
 | Writing C and C++ extensions       |
 | Writing an R package               |
 | Parallel & Distributed Computing   |
-| Async programming                  |
+| ~~Async programming~~                  |
 | Bootstrap and BLB                  |
-| Google Sheet and Big Query         |
+| ~~Google Sheet and Big Query~~         |
 | Interoperate with Python and Julia |
 | Deep learning in R                 |
 
