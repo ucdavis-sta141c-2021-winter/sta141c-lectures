@@ -30,6 +30,7 @@ Display python environment detected. You will be prompted to install `miniconda`
 py_discover_config()
 ```
 
+
 In this class, we are going to focus on `miniconda.` If your system has another workable python environment, you will need to manually install `miniconda` with
 ```{r, eval = FALSE}
 reticulate::install_miniconda()
@@ -81,8 +82,6 @@ The `import_builtins()` function enables to access the [built in functions](http
 ```{r}
 builtins <- import_builtins()
 a <- builtins$range(5L)
-
-builtins <- import_builtins()
 builtins$len(a)
 ```
 
@@ -150,10 +149,10 @@ np <- import("numpy", convert = FALSE)
 
 # do some array manipulations with NumPy
 a <- np$array(1:4)
-sum <- a$cumsum()
+s <- a$cumsum()
 
 # convert to R explicitly at the end
-py_to_r(sum)
+py_to_r(s)
 ```
 
 R Objects are converted to Python objects when they are passed to Python functions.
@@ -168,6 +167,14 @@ def abssum(x):
 x <- rnorm(10)
 # x is implicitly to a native Python list
 py$abssum(x)
+# the input is converted to a python list explicitly
+py$abssum(r_to_py(x))
+```
+```{r}
+# there is no implicit conversion is the input is a python object
+np <- import("numpy", convert = FALSE)
+a <- np$array(1:4)
+py$abssum(a)
 ```
 
 ## scikit-learn
