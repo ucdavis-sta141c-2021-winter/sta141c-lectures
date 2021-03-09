@@ -223,10 +223,10 @@ summary {
 <p>Display python environment detected. You will be prompted to install <code>miniconda</code> if no suitable python is detected.</p>
 <pre class="r"><code>py_discover_config()</code></pre>
 <p>In this class, we are going to focus on <code>miniconda.</code> If your system has another workable python environment, you will need to manually install <code>miniconda</code> with</p>
-<pre class="r"><code>reticulate::install_miniconda()</code></pre>
+<pre class="r"><code>install_miniconda()</code></pre>
 <p>and specify to use <code>miniconda</code> after loading <code>reticulate</code>, like this</p>
 <pre class="r"><code>library(reticulate)
-use_miniconda(required = TRUE)  # only needed if your computer has multiple installations of python.</code></pre>
+use_miniconda(required = TRUE)  # sometimes, you may need to restart R</code></pre>
 <p>Visit <a href="https://rstudio.github.io/reticulate/articles/versions.html">reticulate</a> website if you want to configure R to use different version of python then miniconda.</p>
 </div>
 </div>
@@ -239,10 +239,10 @@ use_miniconda(required = TRUE)  # only needed if your computer has multiple inst
 <pre class="python"><code>import random
 x = random.random()
 x</code></pre>
-<pre><code>## 0.8162657139881372</code></pre>
+<pre><code>## 0.8858999337411984</code></pre>
 <pre class="r"><code># to access Python objects in R
 py$x</code></pre>
-<pre><code>## [1] 0.8162657</code></pre>
+<pre><code>## [1] 0.8858999</code></pre>
 <ul>
 <li>Importing Python module</li>
 </ul>
@@ -251,7 +251,7 @@ py$x</code></pre>
 y &lt;- random$random()</code></pre>
 <pre class="python"><code># to access R object in python
 r.y</code></pre>
-<pre><code>## 0.9051211276427704</code></pre>
+<pre><code>## 0.08449547569258287</code></pre>
 <p>The <code>import_builtins()</code> function enables to access the <a href="https://docs.python.org/3/library/functions.html#built-in-funcs">built in functions</a>.</p>
 <pre class="r"><code>builtins &lt;- import_builtins()
 a &lt;- builtins$range(5L)
@@ -262,11 +262,11 @@ builtins$len(a)</code></pre>
 </ul>
 <pre class="r"><code>source_python(&quot;script.py&quot;)
 z</code></pre>
-<pre><code>## [1] 0.5755029</code></pre>
+<pre><code>## [1] 0.2421499</code></pre>
 <pre class="r"><code># personally, I recommend using `envir = NULL` so no implicit copying is done
 source_python(&quot;script.py&quot;, envir = NULL)
 py$z</code></pre>
-<pre><code>## [1] 0.1848747</code></pre>
+<pre><code>## [1] 0.3548458</code></pre>
 <ul>
 <li>Python REPL: <code>repl_python()</code></li>
 </ul>
@@ -281,13 +281,13 @@ py$z</code></pre>
 <p>By default when Python objects are returned to R they are converted to their equivalent R types.</p>
 <pre class="r"><code>random &lt;- import(&quot;random&quot;)
 (x &lt;- random$random())</code></pre>
-<pre><code>## [1] 0.6777311</code></pre>
+<pre><code>## [1] 0.5112868</code></pre>
 <pre class="r"><code>class(x)</code></pre>
 <pre><code>## [1] &quot;numeric&quot;</code></pre>
 <p>However, if you’d rather make conversion from Python to R explicit and deal in native Python objects by default you can pass <code>convert = FALSE</code> to the import function</p>
 <pre class="r"><code>random &lt;- import(&quot;random&quot;, convert = FALSE)
 (x &lt;- random$random())</code></pre>
-<pre><code>## 0.6826188054903674</code></pre>
+<pre><code>## 0.2203370325105386</code></pre>
 <pre class="r"><code>class(x)</code></pre>
 <pre><code>## [1] &quot;python.builtin.float&quot;  &quot;python.builtin.object&quot;</code></pre>
 <p>We cannot work with native Python objects directly.</p>
@@ -296,7 +296,7 @@ py$z</code></pre>
 <p>The function <code>py_to_r</code> converts native Python objects to R objects.</p>
 <pre class="r"><code># convert x to R object first
 py_to_r(x) + 1</code></pre>
-<pre><code>## [1] 1.682619</code></pre>
+<pre><code>## [1] 1.220337</code></pre>
 <p>Let’s check another numpy example.</p>
 <pre class="r"><code>np &lt;- import(&quot;numpy&quot;, convert = FALSE)
 
@@ -314,10 +314,10 @@ py_to_r(s)</code></pre>
 <pre class="r"><code>x &lt;- rnorm(10)
 # x is implicitly to a native Python list
 py$abssum(x)</code></pre>
-<pre><code>## [1] 6.140764</code></pre>
+<pre><code>## [1] 6.393576</code></pre>
 <pre class="r"><code># the input is converted to a python list explicitly
 py$abssum(r_to_py(x))</code></pre>
-<pre><code>## [1] 6.140764</code></pre>
+<pre><code>## [1] 6.393576</code></pre>
 <pre class="r"><code># there is no implicit conversion is the input is a python object
 np &lt;- import(&quot;numpy&quot;, convert = FALSE)
 a &lt;- np$array(1:4)
@@ -328,6 +328,8 @@ py$abssum(a)</code></pre>
 <h2>scikit-learn</h2>
 <p><a href="https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LinearRegression.html"><code>scikit-learn</code></a> is a popular package for doing machine learning. It could be installed with</p>
 <pre class="r"><code>py_install(&quot;scikit-learn&quot;)</code></pre>
+<pre class="r"><code>py_module_available(&quot;sklearn&quot;)</code></pre>
+<pre><code>## [1] TRUE</code></pre>
 <pre class="python"><code>import numpy as np
 from sklearn.linear_model import LinearRegression</code></pre>
 <p>To use it,</p>
@@ -341,30 +343,35 @@ lr = LinearRegression()
 lr.fit(X, y)</code></pre>
 <pre><code>## LinearRegression()</code></pre>
 <pre class="python"><code>print(lr.coef_)</code></pre>
-<pre><code>## [0.92097771 2.01225365]</code></pre>
+<pre><code>## [0.83136862 2.15052616]</code></pre>
 <pre class="python"><code>print(lr.intercept_)</code></pre>
-<pre><code>## 3.2355859492332844</code></pre>
+<pre><code>## 3.0501628552190363</code></pre>
 <pre class="python"><code>Xtest = np.array([[1, 3]])
 lr.predict(Xtest)
 # double check</code></pre>
-<pre><code>## array([10.1933246])</code></pre>
+<pre><code>## array([10.33310996])</code></pre>
 <pre class="python"><code>lr.intercept_ + Xtest.dot(lr.coef_)</code></pre>
-<pre><code>## array([10.1933246])</code></pre>
+<pre><code>## array([10.33310996])</code></pre>
 <p>How about passing R dataframes to it? Say we want to regress <code>mpg ~ hp * wt</code> of <code>mtcars</code>.</p>
 <p>Method 1: prepare a function in python first</p>
 <pre class="python"><code>from sklearn.linear_model import LinearRegression
+
 def pylm(X, y):
   lr = LinearRegression()
   lr.fit(X, y)
   return lr</code></pre>
+<pre class="r"><code>fit &lt;- lm(mpg ~ hp * wt, data = mtcars)
+new_data &lt;- data.frame(hp = 1.1, wt = 2.0)
+predict(fit, new_data)</code></pre>
+<pre><code>##        1 
+## 33.30433</code></pre>
 <pre class="r"><code># we do not need intercept
 X &lt;- model.matrix(~ -1 + hp * wt, mtcars)
 y &lt;- mtcars$mpg
 fit &lt;- py$pylm(X, y)
-Xtest &lt;- model.matrix(~ -1 + hp * wt, 
-                      data.frame(hp = 1, wt = 2))
+Xtest &lt;- model.matrix(~ -1 + hp * wt, new_data)
 fit$predict(Xtest)</code></pre>
-<pre><code>## [1] 33.31077</code></pre>
+<pre><code>## [1] 33.30433</code></pre>
 <p>Method 2: Import python module directly.</p>
 <pre class="r"><code>sklearn &lt;- import(&quot;sklearn&quot;)
 LinearRegression &lt;- sklearn$linear_model$LinearRegression
@@ -376,10 +383,10 @@ lr$fit(X, y)</code></pre>
 <pre><code>## LinearRegression()</code></pre>
 <pre class="r"><code>lr$coef_</code></pre>
 <pre><code>## [1] -0.12010209 -8.21662430  0.02784815</code></pre>
-<pre class="r"><code>Xtest &lt;- data.frame(hp = 1, wt = 2)
+<pre class="r"><code>Xtest &lt;- data.frame(hp = 1.1, wt = 2)
 XMatrix &lt;- model.matrix(~ -1 + hp * wt, Xtest)
 lr$predict(XMatrix)</code></pre>
-<pre><code>## [1] 33.31077</code></pre>
+<pre><code>## [1] 33.30433</code></pre>
 </div>
 </div>
 

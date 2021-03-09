@@ -33,13 +33,13 @@ py_discover_config()
 
 In this class, we are going to focus on `miniconda.` If your system has another workable python environment, you will need to manually install `miniconda` with
 ```{r, eval = FALSE}
-reticulate::install_miniconda()
+install_miniconda()
 ```
 and specify to use `miniconda` after loading `reticulate`, like this
 
 ```{r, eval = FALSE}
 library(reticulate)
-use_miniconda(required = TRUE)  # only needed if your computer has multiple installations of python.
+use_miniconda(required = TRUE)  # sometimes, you may need to restart R
 ```
 
 Visit [reticulate](https://rstudio.github.io/reticulate/articles/versions.html) website if you want to configure R to use different version of python then miniconda.
@@ -113,7 +113,6 @@ https://www.pyscoop.com/learn-python-in-10-minutes/
 
 ## Type conversions
 
-
 https://rstudio.github.io/reticulate/#type-conversions
 
 By default when Python objects are returned to R they are converted to their equivalent R types.
@@ -184,12 +183,14 @@ py$abssum(a)
 py_install("scikit-learn")
 ```
 
+```{r}
+py_module_available("sklearn")
+```
 
 ```{python}
 import numpy as np
 from sklearn.linear_model import LinearRegression
 ```
-
 
 To use it,
 ```{python}
@@ -219,24 +220,27 @@ Method 1: prepare a function in python first
 
 ```{python}
 from sklearn.linear_model import LinearRegression
+
 def pylm(X, y):
   lr = LinearRegression()
   lr.fit(X, y)
   return lr
-
 ```
 
+```{r}
+fit <- lm(mpg ~ hp * wt, data = mtcars)
+new_data <- data.frame(hp = 1.1, wt = 2.0)
+predict(fit, new_data)
+```
 
 ```{r}
 # we do not need intercept
 X <- model.matrix(~ -1 + hp * wt, mtcars)
 y <- mtcars$mpg
 fit <- py$pylm(X, y)
-Xtest <- model.matrix(~ -1 + hp * wt, 
-                      data.frame(hp = 1, wt = 2))
+Xtest <- model.matrix(~ -1 + hp * wt, new_data)
 fit$predict(Xtest)
 ```
-
 
 Method 2: Import python module directly.
 
@@ -253,7 +257,7 @@ lr$coef_
 ```
 
 ```{r}
-Xtest <- data.frame(hp = 1, wt = 2)
+Xtest <- data.frame(hp = 1.1, wt = 2)
 XMatrix <- model.matrix(~ -1 + hp * wt, Xtest)
 lr$predict(XMatrix)
 ```
