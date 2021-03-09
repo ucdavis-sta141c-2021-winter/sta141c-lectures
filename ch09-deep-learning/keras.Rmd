@@ -11,7 +11,7 @@ editor_options:
 
 - Neural networks (NNs) were introduced in 1980s
 - inspired by the architecture of the human brain
-     
+
 ```{r echo=FALSE, out.width='80%'}
 knitr::include_graphics("fig18_1.png")
 ```
@@ -28,27 +28,31 @@ knitr::include_graphics("fig18_1.png")
 - the function $h$ is typically the identity function for quantitative regression and a sigmoid function for binary regression.
 
 
+```{r}
+library(nnet)
+fit <- nnet(mpg ~ wt + hp + disp + cyl, data = mtcars, size = 100)
+```
+
+
 ## What’s the big deal?
 
-A statistician may say: A neural network is just a nonlinear model, not too different from many other
+A statistician may say: A neural network is just a slightly more complex nonlinear model, not too different from many other
 generalizations of linear models.
 
-But..
+After enjoying considerable popularity for a number of years, neural
+networks were somewhat sidelined by new inventions in the mid 1990s,
+such as boosting, SVMs and random forest.
+
+Then they re-emerged with a vengeance after 2010—the
+reincarnation now being called **deep learning**. 
 
 NNs could be scaled up and generalized in a variety of way
 - many hidden units in a layer
 - multiple hidden layer
 - weight sharing
-- a variety of colorful forms of regularization (e.g., dropout layer)
+- a variety of colorful forms of regularization (e.g., dropout layer to avoid overfitting)
 - innovative learning algorithm
 - most importantly, the community
-
-After enjoying considerable popularity for a number of years, neural
-networks were somewhat sidelined by new inventions in the mid 1990s,
-such as boosting and SVMs.
-
-Then they re-emerged with a vengeance after 2010—the
-reincarnation now being called **deep learning**. 
 
 
 ## Handwritten Digit Problem
@@ -62,7 +66,7 @@ knitr::include_graphics("fig18_2.png")
 ## Algorithms
 
 - Backpropagation is a most common algorithm to fit a NN.
-    - update the weights by using one observation / a few observation at a time
+    - update the weights by using one observation / a few observations at a time
     
 - Stochastic Gradient Descent Methods
     - update the weights by using a random batch of observations at a time
@@ -76,6 +80,8 @@ There are a number of activation functions $g^{(k)}$
 ```{r echo=FALSE, out.width='70%'}
 knitr::include_graphics("fig18_6.png")
 ```
+
+RELU: rectified linear unit
 
 
 ## Dropout
@@ -106,11 +112,13 @@ We are going to install it to the miniconda environment `r-tensorflow`.
 (It requires you to install `miniconda` as indicated in python.Rmd)
 
 ```{r, eval = FALSE}
+# install R specific miniconda if you haven't
 install_miniconda()
 ```
 
 ```{r, eval = FALSE}
-install_keras("conda", conda = reticulate:::miniconda_conda(), envname = "r-tensorflow")
+# install keras into an environment if you haven't
+install_keras("conda", envname = "r-tensorflow")
 ```
 
 Use the environment (you might need to restart RStudio).
@@ -142,9 +150,9 @@ for (i in 1:25) plot_mnist(mnist$train, i)
 
 ```{r}
 # The data, shuffled and split between train and test sets
-x_train <- mnist$train$x * 1.0
+x_train <- mnist$train$x
 y_train <- mnist$train$y
-x_test <- mnist$test$x * 1.0
+x_test <- mnist$test$x
 y_test <- mnist$test$y
 
 # convert class vectors to binary class matrices
@@ -152,11 +160,12 @@ y_train <- to_categorical(y_train, 10)
 y_test <- to_categorical(y_test, 10)
 ```
 
+hist(x_train[1,,])
 
 ```{r}
 mnist_model <- keras_model_sequential() %>%
   layer_flatten(input_shape = c(28, 28)) %>%  # because they are images
-  layer_lambda(function(x) x / 256) %>%       # scale to 0 and 1
+  layer_lambda(function(x) x / 255) %>%       # scale to 0 and 1
   layer_dense(units = 256, activation = "relu") %>%
   layer_dropout(rate = 0.4) %>%
   layer_dense(units = 128, activation = "relu") %>%
@@ -197,8 +206,6 @@ wrong_idx <- which(pred != mnist$test$y)
 par(mfrow = c(5, 5), mar = c(0, 0, 0, 0))
 for (i in seq_along(wrong_idx)) plot_mnist(mnist$test, wrong_idx[i])
 ```
-
-
 
 
 See https://keras.rstudio.com/articles/getting_started.html for more examples
@@ -253,9 +260,6 @@ model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accur
 model.fit(x_train, y_train, batch_size=128, epochs=15, validation_split=0.2)
 ```
 
-PS: due to an [issue](https://github.com/rstudio/reticulate/pull/774) of reticulate, we won't be able to see the progress bar while fitting the model.
-
-
 # MNIST with Convolutional Networks
 
 ## Convolutional NN
@@ -274,23 +278,28 @@ knitr::include_graphics("pool.png")
 ```
 
 
-## Google computer engine and GPU learning
+## Google compute engine and GPU learning
 
 We could easily create a virtual machine with GPU support using [googleComputeEngineR](https://cloudyr.github.io/googleComputeEngineR/articles/gpu.html).
 
 - First, go to canvas and click the Google Cloud Student Coupon Retrieval Link. You will be given $50 dollars to use any google cloud services. You may receive two emails, one for confirmation, another for redeeming the coupon. Please be careful with the email account you have logged in when you redeem the coupon. You may use either your ucd email (recommended) or a personal email.
 
-- Go to https://console.cloud.google.com/. In the sidebar, go to "API's and Services" -> "Credentials". Click the CREATE CREDENTIALS button and choose "Service account". Following the instruction (you could skip the optional steps) and create a key with JSON type. Save the json file to your computer.
+- Go to https://console.cloud.google.com/. In the sidebar, go to "API's and Services" -> "Credentials". Click the CREATE CREDENTIALS button and choose "Service account". Create a key with JSON type and following the instruction, add "Compute Admin" and "Service Account User" roles in the step 2. Save the json file to your computer.
 
 - Then follow the instruction of googleComputeEngineR to [setup](https://cloudyr.github.io/googleComputeEngineR/articles/installation-and-authentication.html) your account. Basically you need to tell googleComputeEngineR your project ID, select a region and the path to the JSON file.
 
 One way to set it up is to edit the `.Renviron` file by `usethis::edit_r_environ("project")` or just `usethis::edit_r_environ()` and put down, for example
 
 ```
-GCE_DEFAULT_ZONE="us-central1-a"
+GCE_DEFAULT_ZONE="us-west2-b"
 GCE_DEFAULT_PROJECT_ID="ucdsta141"
 GCE_AUTH_FILE="service_account.json"
 ```
+
+See: https://cloud.google.com/compute/docs/gpus/gpu-regions-zones for the zone
+
+- Then you will need to increase GPUS_ALL_REGIONS as shown in
+https://stackoverflow.com/a/65951365/2223504
 
 - create your rstudio server on the remote machine with
 
@@ -300,8 +309,8 @@ library(googleComputeEngineR)
 vm <- gce_vm(
   template = "rstudio-gpu",
   name = "rstudio-server",
-  username = "USERNAME",
-  password = "PASSWORD"
+  username = "admin",
+  password = askpass::askpass()
 )
 ```
 
@@ -321,3 +330,4 @@ gce_vm_start("rstudio-server")
 
 See: [mnist_cnn.R](mnist_cnn.R)
 
+Reference: https://towardsdatascience.com/going-beyond-99-mnist-handwritten-digits-recognition-cfff96337392
