@@ -1,5 +1,5 @@
 # module load R
-# srun -p high2 -t 1 -n 4 Rscript 03-scatter.R
+# srun -t 1 -n 4 Rscript 04-gather.R
 
 suppressPackageStartupMessages({
     library(pbdMPI)
@@ -10,13 +10,10 @@ init()
 .comm.rank <- comm.rank()
 
 ### Examples.
-if (.comm.rank == 0) {
-    x <- replicate(.comm.size, rnorm(10), simplify = FALSE)
-} else {
-    x <- NULL
-}
+x <- .comm.rank + 1
+comm.cat("x =", x, "\n", all.rank = TRUE)
 
-y <- scatter(x, rank.source = 0)
+y <- gather(x, rank.dest = 0)  # only rank 0 receives a list of x
 comm.print(y, all.rank = TRUE)
 
 ### Finish.

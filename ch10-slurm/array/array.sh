@@ -4,7 +4,6 @@
 #SBATCH --output=myjob_%a.out
 #SBATCH --error=myjob_%a.err
 #SBATCH --array=1-8
-#SBATCH -p high2
 #SBATCH -n 1
 #SBATCH -t 1
 

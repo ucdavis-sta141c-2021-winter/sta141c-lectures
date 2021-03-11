@@ -1,5 +1,5 @@
 # module load R
-# srun -p high2 -t 1 -n 4 Rscript 02-bcast.R
+# srun -t 1 -n 4 Rscript 03-scatter.R
 
 suppressPackageStartupMessages({
     library(pbdMPI)
@@ -11,13 +11,13 @@ init()
 
 ### Examples.
 if (.comm.rank == 0) {
-    x <- 3.14
+    x <- replicate(.comm.size, rnorm(10), simplify = FALSE)
 } else {
     x <- NULL
 }
 
-y <- bcast(x, rank.source = 0)
-comm.cat("y = ", y, all.rank = TRUE)
+y <- scatter(x, rank.source = 0)
+comm.print(y, all.rank = TRUE)
 
 ### Finish.
 finalize()

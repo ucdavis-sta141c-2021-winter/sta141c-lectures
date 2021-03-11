@@ -1,5 +1,5 @@
 # module load R
-# srun -p high2 -t 1 -n 4 Rscript 07-allreduce.R
+# srun -t 1 -n 4 Rscript 05-allgather.R
 
 suppressPackageStartupMessages({
     library(pbdMPI)
@@ -13,8 +13,8 @@ init()
 x <- .comm.rank + 1
 comm.cat("x =", x, "\n", all.rank = TRUE)
 
-y <- allreduce(x, op = "sum")  # all ranks receive the sum
-comm.cat("y is ", y, "\n", all.rank = TRUE)
+y <- allgather(x)  # all ranks receive the list of x
+comm.print(y, all.rank = TRUE)
 
 ### Finish.
 finalize()

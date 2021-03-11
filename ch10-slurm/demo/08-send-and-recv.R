@@ -1,5 +1,5 @@
 # module load R
-# srun -p high2 -t 1 -n 4 Rscript 09-isend-and-recv.R
+# srun -t 1 -n 4 Rscript 08-send-and-recv.R
 
 suppressPackageStartupMessages({
     library(pbdMPI)
@@ -12,9 +12,9 @@ init()
 ### Examples.
 if (.comm.rank == 0) {
     x <- 3.14
-    isend(x, rank.dest = 1)
-    isend(x, rank.dest = 2)
-    isend(x, rank.dest = 3)
+    send(x, rank.dest = 1)
+    send(x, rank.dest = 2)
+    send(x, rank.dest = 3)
 } else {
     x <- recv(rank.source = 0)
 }

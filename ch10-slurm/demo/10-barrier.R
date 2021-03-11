@@ -1,5 +1,5 @@
 # module load R
-# srun -p high2 -t 1 -n 4 Rscript 10-barrier.R
+# srun -t 1 -n 4 Rscript 10-barrier.R
 
 suppressPackageStartupMessages({
     library(pbdMPI)

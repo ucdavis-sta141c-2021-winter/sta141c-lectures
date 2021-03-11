@@ -1,5 +1,5 @@
 # module load R
-# srun -p high2 -t 1 -n 4 Rscript 14-calc-pi.R
+# srun -t 1 -n 4 Rscript 14-calc-pi.R
 
 suppressPackageStartupMessages({
     library(pbdMPI)
