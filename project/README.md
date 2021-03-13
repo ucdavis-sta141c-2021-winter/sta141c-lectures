@@ -49,6 +49,13 @@ Your grade will be determined by the amount of work that you have made and how w
 
 ## How to submit?
 
-To be announced later.
 
 Due: Mar 17, 2021 11:59 pm
+
+Please submit the following to the email address <submitsta141c@gmail.com> using your UCD email.
+
+1. your name and student id
+
+2. A zip file of the R package. Optionally, you could also push the source code to github.
+
+3. Attach a html or pdf version of the Rmarkdown files.
